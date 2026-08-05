@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon/38x38/Background" clip-path="url(#clip0_35_8516)">
+<path id="Vector" d="M30 0H8C3.58172 0 0 3.58172 0 8V30C0 34.4183 3.58172 38 8 38H30C34.4183 38 38 34.4183 38 30V8C38 3.58172 34.4183 0 30 0Z" fill="#FFA97E"/>
+<path id="Vector_2" fill-rule="evenodd" clip-rule="evenodd" d="M38 12.0042V30.0804C38 34.4543 34.4612 38 30.0958 38H19.5664L14.4385 28.0106C13.4401 26.0659 14.2043 23.6784 16.1453 22.6782L36.0134 12.4393C36.6496 12.1114 37.3332 11.9733 38 12.0042Z" fill="#FFA97E"/>
+<path id="Vector_3" fill-rule="evenodd" clip-rule="evenodd" d="M16 0L15.3406 11.2901C15.2139 13.4578 13.292 15.116 11.0479 14.9936L0 14.3915V7.86245C0 3.52014 3.64429 0 8.13975 0H16Z" fill="#FFA97E"/>
+</g>
+<defs>
+<clipPath id="clip0_35_8516">
+<rect width="38" height="38" fill="white"/>
+</clipPath>
+</defs>
+</svg>
