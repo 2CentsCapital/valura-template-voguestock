@@ -1,111 +1,109 @@
-"use client";
+import { useRef, type CSSProperties } from 'react';
+import ParticleSphereAnimation from './orbiting-circles-02-utils/particalsphear';
+import iconStocks from '../../assets/icons/stocks.webp';
+import iconFunds from '../../assets/icons/funds.webp';
+import iconBonds from '../../assets/icons/bonds.webp';
+import iconStructured from '../../assets/icons/structured.webp';
+import iconCoin from '../../assets/icons/coin.webp';
+import { useInView } from '../../lib/motion';
 
-import ParticleSphereAnimation from "./orbiting-circles-02-utils/particalsphear";
+type OrbitItem = { kind: 'icon'; src: string } | { kind: 'exchange'; label: string };
 
-const logoModules = import.meta.glob<{ default: string }>('../../assets/Logos/*.{png,jpg,jpeg,svg,webp}', { eager: true });
-const logoAssets = Object.values(logoModules).map(mod => mod.default);
-
-// Shuffle logos once
-const shuffledLogos = [...logoAssets].sort(() => 0.5 - Math.random());
-
-// Distribute logos dynamically across 3 orbits
-const getOrbitIcons = (startIndex: number, count: number) => {
-  const angleStep = 360 / count;
-  return Array.from({ length: count }, (_, i) => ({
-    src: shuffledLogos[(startIndex + i) % shuffledLogos.length],
-    alt: `Logo ${startIndex + i + 1}`,
-    angle: Math.round(i * angleStep - 180),
-  }));
-};
-
-const innerCount = Math.min(6, Math.floor(shuffledLogos.length / 3));
-const middleCount = Math.min(8, Math.floor(shuffledLogos.length / 3));
-const outerCount = shuffledLogos.length - innerCount - middleCount;
-
-const orbits = [
+// Exchange codes are the ones shown on the live landing's hero globe; icons are the template's 3D art.
+const ORBITS: { size: string; duration: number; items: OrbitItem[] }[] = [
   {
-    size: "w-110 h-110 md:w-180 md:h-180",
+    size: 'w-110 h-110 md:w-180 md:h-180',
     duration: 20,
-    icons: getOrbitIcons(0, innerCount),
+    items: [
+      { kind: 'exchange', label: 'NYSE' },
+      { kind: 'icon', src: iconStocks },
+      { kind: 'exchange', label: 'LSE' },
+      { kind: 'icon', src: iconCoin },
+    ],
   },
   {
-    size: "w-150 h-150 md:w-220 md:h-220",
+    size: 'w-150 h-150 md:w-220 md:h-220',
     duration: 26,
-    icons: getOrbitIcons(innerCount, middleCount),
+    items: [
+      { kind: 'icon', src: iconFunds },
+      { kind: 'exchange', label: 'SGX' },
+      { kind: 'icon', src: iconBonds },
+      { kind: 'exchange', label: 'TSE' },
+      { kind: 'icon', src: iconStructured },
+    ],
   },
   {
-    size: "w-180 h-180 md:w-265 md:h-265",
+    size: 'w-180 h-180 md:w-265 md:h-265',
     duration: 32,
-    icons: getOrbitIcons(innerCount + middleCount, outerCount),
+    items: [
+      { kind: 'icon', src: iconCoin },
+      { kind: 'icon', src: iconStocks },
+      { kind: 'icon', src: iconBonds },
+      { kind: 'icon', src: iconFunds },
+      { kind: 'icon', src: iconStructured },
+      { kind: 'icon', src: iconCoin },
+    ],
   },
 ];
 
+/** Decorative orbit rings around a particle globe. Animations pause off screen and stop for reduced motion. */
 export default function OrbitingCirclesGlobeDemo() {
-  return (
-    <div className="relative w-full h-[380px] md:h-[560px] overflow-hidden flex justify-center">
-      <style>{`
-        @keyframes orbit-cw {
-          from { transform: rotate(var(--start-angle)) }
-          to   { transform: rotate(calc(var(--start-angle) + 360deg)) }
-        }
-        @keyframes orbit-ccw {
-          from { transform: rotate(var(--start-angle)) }
-          to   { transform: rotate(calc(var(--start-angle) - 360deg)) }
-        }
-        @keyframes counter-cw {
-          from { transform: rotate(var(--counter-offset, 0deg)) }
-          to   { transform: rotate(calc(var(--counter-offset, 0deg) - 360deg)) }
-        }
-        @keyframes counter-ccw {
-          from { transform: rotate(var(--counter-offset, 0deg)) }
-          to   { transform: rotate(calc(var(--counter-offset, 0deg) + 360deg)) }
-        }
-      `}</style>
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(rootRef, '100px');
 
-      {/* Center particle globe */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 aspect-square pointer-events-none w-75 md:w-145 z-10">
-        <ParticleSphereAnimation />
+  return (
+    <div
+      ref={rootRef}
+      className={`relative flex h-[380px] w-full justify-center overflow-hidden md:h-[560px] ${inView ? '' : 'orbit-paused'}`}
+    >
+      <div className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-square w-75 -translate-x-1/2 translate-y-1/2 md:w-145">
+        <ParticleSphereAnimation active={inView} />
       </div>
 
-      {/* Orbiting rings */}
-      {orbits.map((orbit, index) => {
-        const isCW = index % 2 === 0;
-        const orbitAnim = isCW ? "orbit-cw" : "orbit-ccw";
-        const counterAnim = isCW ? "counter-cw" : "counter-ccw";
+      {ORBITS.map((orbit, orbitIndex) => {
+        const clockwise = orbitIndex % 2 === 0;
+        const orbitAnimation = clockwise ? 'orbit-cw' : 'orbit-ccw';
+        const counterAnimation = clockwise ? 'counter-cw' : 'counter-ccw';
+        const angleStep = 360 / orbit.items.length;
 
         return (
           <div
-            key={index}
+            key={orbit.size}
             className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rounded-full border border-gray-200 ${orbit.size}`}
           >
-            {orbit.icons.map((iconData, iconIndex) => (
-              <div
-                key={iconIndex}
-                className="absolute top-0 left-1/2 h-1/2 -ml-8 origin-bottom flex flex-col justify-start items-center"
-                style={
-                  {
-                    "--start-angle": `${iconData.angle}deg`,
-                    animation: `${orbitAnim} ${orbit.duration}s linear infinite`,
-                  } as React.CSSProperties
-                }
-              >
+            {orbit.items.map((item, itemIndex) => {
+              const angle = Math.round(itemIndex * angleStep - 180);
+              return (
                 <div
-                  className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-white border border-gray-200/80 shadow-md flex items-center justify-center p-1.5 -mt-6 md:-mt-7 relative z-10 hover:scale-110 transition-transform duration-200"
+                  key={itemIndex}
+                  className="orbit-anim absolute top-0 left-1/2 -ml-8 flex h-1/2 origin-bottom flex-col items-center justify-start"
                   style={
                     {
-                      "--counter-offset": `${-iconData.angle}deg`,
-                      animation: `${counterAnim} ${orbit.duration}s linear infinite`,
-                    } as React.CSSProperties
+                      '--start-angle': `${angle}deg`,
+                      transform: `rotate(${angle}deg)`,
+                      animation: `${orbitAnimation} ${orbit.duration}s linear infinite`,
+                    } as CSSProperties
                   }
                 >
-                  <img
-                    src={iconData.src}
-                    alt={iconData.alt}
-                    className="w-full h-full max-w-full max-h-full object-contain pointer-events-none rounded-full"
-                  />
+                  <div
+                    className="orbit-anim relative z-10 -mt-6 flex h-11 w-11 items-center justify-center rounded-full border border-gray-200/80 bg-white p-1.5 shadow-md md:-mt-7 md:h-14 md:w-14"
+                    style={
+                      {
+                        '--counter-offset': `${-angle}deg`,
+                        transform: `rotate(${-angle}deg)`,
+                        animation: `${counterAnimation} ${orbit.duration}s linear infinite`,
+                      } as CSSProperties
+                    }
+                  >
+                    {item.kind === 'icon' ? (
+                      <img src={item.src} alt="" width={56} height={56} loading="lazy" decoding="async" className="pointer-events-none h-full w-full rounded-full object-contain" />
+                    ) : (
+                      <span className="font-sans text-[10px] font-extrabold tracking-wide text-brand-dark md:text-xs">{item.label}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         );
       })}

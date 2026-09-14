@@ -1,304 +1,341 @@
-import { useState, useRef, useEffect } from 'react';
-import imgGlobalStocks from '../assets/Extras/Global Stocks.png';
-import imgMutualFunds from '../assets/Extras/Mutual Funds.png';
-import imgFixedIncome from '../assets/Extras/Fixed Income.jpg';
-import imgStructuredProducts from '../assets/Extras/Stuctured Products.png';
-import imgEllipse25 from '../assets/c0d5eda5ba281c2c9ad3dfb5e50bcfec2ba97bea.svg';
-import imgGlobalStocksIcon from '../assets/global-stocks-icon.png';
-import imgEtfIcon from '../assets/etf-icon.png';
-import imgFixedIncomeIcon from '../assets/fixed-income-icon.png';
-import imgStructuredProductsIcon from '../assets/structured-products-icon.png';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { ArrowRight } from 'lucide-react';
+import imgStocks from '../assets/media/invest-stocks.webp';
+import imgFunds from '../assets/media/invest-funds.webp';
+import imgBonds from '../assets/media/invest-bonds.webp';
+import imgStructured from '../assets/media/invest-structured.webp';
+import imgPreIpo from '../assets/media/invest-preipo.webp';
+import imgPortfolios from '../assets/media/invest-portfolios.webp';
+import iconStocks from '../assets/icons/stocks.webp';
+import iconFunds from '../assets/icons/funds.webp';
+import iconBonds from '../assets/icons/bonds.webp';
+import iconStructured from '../assets/icons/structured.webp';
+import iconCoin from '../assets/icons/coin.webp';
+import iconBarGraph from '../assets/icons/bar-graph.svg';
 import ScrollReveal from './ui/ScrollReveal';
+import { SIGNUP_URL } from '../config';
+import { useInView, usePrefersReducedMotion } from '../lib/motion';
 
-interface TabData {
-  id: number;
-  label: string;
+interface Holding {
+  id: string;
   title: string;
   desc: string;
+  tag: string;
   image: string;
-  iconBg: string;
-  iconSrc: string;
+  width: number;
+  height: number;
+  icon: string;
   imagePos?: string;
 }
 
+// The live landing's six "What you can hold" cards.
+const HOLDINGS: Holding[] = [
+  {
+    id: 'stocks',
+    title: 'Global Stocks & ETFs',
+    desc: 'Own Apple, Nvidia, Microsoft and thousands more across 90+ global markets, in fractions, from a few dollars.',
+    tag: 'Fractional',
+    image: imgStocks,
+    width: 519,
+    height: 548,
+    icon: iconStocks,
+  },
+  {
+    id: 'funds',
+    title: 'Global Mutual Funds',
+    desc: 'Funds from global fund managers, held in the same account.',
+    tag: 'Diversified',
+    image: imgFunds,
+    width: 588,
+    height: 573,
+    icon: iconFunds,
+  },
+  {
+    id: 'bonds',
+    title: 'Bonds & Fixed Income',
+    desc: 'Earn dollar income from global bonds, fractional, from just $1,000.',
+    tag: 'From $1,000',
+    image: imgBonds,
+    width: 900,
+    height: 711,
+    icon: iconBonds,
+  },
+  {
+    id: 'structured',
+    title: 'Structured Income',
+    desc: 'Notes issued by A-rated global banks. Coupons are indicative, disclosed per issue and not assured. Capital is at risk.',
+    tag: 'Indicative coupons*',
+    image: imgStructured,
+    width: 590,
+    height: 816,
+    icon: iconStructured,
+    imagePos: 'object-top',
+  },
+  {
+    id: 'preipo',
+    title: 'Pre-IPO & Unlisted',
+    desc: 'Back private companies early, before they go public.',
+    tag: 'From $10,000',
+    image: imgPreIpo,
+    width: 720,
+    height: 640,
+    icon: iconCoin,
+  },
+  {
+    id: 'portfolios',
+    title: 'Ready Portfolios',
+    desc: 'Expert-built global baskets you buy in one tap, rebalanced for you, no stock-picking.',
+    tag: 'One-tap',
+    image: imgPortfolios,
+    width: 720,
+    height: 640,
+    icon: iconBarGraph,
+  },
+];
+
+const FOOTNOTE =
+  "*Coupon rates are indicative, set at issuance and not guaranteed; structured products carry the issuer's credit risk. Availability and minimums vary by jurisdiction and suitability.";
+
 export default function FeatureTabs() {
   const [activeTab, setActiveTab] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const tabs: TabData[] = [
-    {
-      id: 0,
-      label: 'Global Stocks',
-      title: 'Global Stocks',
-      desc: 'Invest in leading companies listed across major global exchanges with seamless access.',
-      image: imgGlobalStocks,
-      iconBg: 'bg-[#405ae0]/15',
-      iconSrc: imgGlobalStocksIcon,
-      imagePos: 'object-center',
-    },
-    {
-      id: 1,
-      label: 'ETFs & Mutual Funds',
-      title: 'ETFs & Mutual Funds',
-      desc: 'Diversify your portfolio through professionally managed global investment funds.',
-      image: imgMutualFunds,
-      iconBg: 'bg-[#5cab6a]/15',
-      iconSrc: imgEtfIcon,
-      imagePos: 'object-center',
-    },
-    {
-      id: 2,
-      label: 'Fixed Income',
-      title: 'Fixed Income',
-      desc: 'Generate stable returns with international bonds and fixed-income opportunities.',
-      image: imgFixedIncome,
-      iconBg: 'bg-[#ffa97e]/15',
-      iconSrc: imgFixedIncomeIcon,
-      imagePos: 'object-center',
-    },
-    {
-      id: 3,
-      label: 'Structured Products',
-      title: 'Structured Products',
-      desc: 'Access professionally designed investment strategies tailored to different risk profiles.',
-      image: imgStructuredProducts,
-      iconBg: 'bg-[#b1a8ff]/15',
-      iconSrc: imgStructuredProductsIcon,
-      imagePos: 'object-top',
-    },
-  ];
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(0);
+  const reducedMotion = usePrefersReducedMotion();
+  const carouselInView = useInView(carouselRef, '0px');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (containerRef.current && window.innerWidth < 1024) {
-        setActiveTab((prev) => {
-          const next = (prev + 1) % tabs.length;
-          const width = containerRef.current!.offsetWidth;
-          containerRef.current!.scrollTo({
-            left: next * width,
-            behavior: 'smooth',
-          });
-          return next;
-        });
-      }
-    }, 3000); // 3 seconds delay
+    activeRef.current = activeTab;
+  }, [activeTab]);
 
-    return () => clearInterval(interval);
-  }, [tabs.length]);
+  const scrollCarouselTo = useCallback(
+    (index: number) => {
+      const container = carouselRef.current;
+      const slide = container?.children[index] as HTMLElement | undefined;
+      const first = container?.children[0] as HTMLElement | undefined;
+      if (!container || !slide || !first || container.offsetWidth === 0) return;
+      container.scrollTo({ left: slide.offsetLeft - first.offsetLeft, behavior: reducedMotion ? 'auto' : 'smooth' });
+    },
+    [reducedMotion]
+  );
 
-  const scrollToTab = (idx: number) => {
-    if (containerRef.current) {
-      const width = containerRef.current.offsetWidth;
-      containerRef.current.scrollTo({
-        left: idx * width,
-        behavior: 'smooth',
-      });
-      setActiveTab(idx);
-    }
+  // Mobile carousel auto-advance: only while visible, never with reduced motion, and off after any interaction.
+  useEffect(() => {
+    if (!autoAdvance || reducedMotion || !carouselInView) return;
+    const timer = window.setInterval(() => {
+      const next = (activeRef.current + 1) % HOLDINGS.length;
+      scrollCarouselTo(next);
+      setActiveTab(next);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [autoAdvance, reducedMotion, carouselInView, scrollCarouselTo]);
+
+  const stopAutoAdvance = () => setAutoAdvance(false);
+
+  const handleCarouselScroll = () => {
+    const container = carouselRef.current;
+    const first = container?.children[0] as HTMLElement | undefined;
+    if (!container || !first || first.offsetWidth === 0) return;
+    const gap = 24;
+    const index = Math.round(container.scrollLeft / (first.offsetWidth + gap));
+    if (index !== activeRef.current && index >= 0 && index < HOLDINGS.length) setActiveTab(index);
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-    const width = container.offsetWidth;
-    const newActive = Math.round(container.scrollLeft / width);
-    if (newActive !== activeTab && newActive >= 0 && newActive < tabs.length) {
-      setActiveTab(newActive);
-    }
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = HOLDINGS.length - 1;
+    let next = index;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = index === last ? 0 : index + 1;
+    else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = index === 0 ? last : index - 1;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = last;
+    else return;
+    event.preventDefault();
+    setActiveTab(next);
+    tabRefs.current[next]?.focus();
   };
 
   return (
-    <section className="bg-white py-20 border-t border-gray-100" id="why-valura">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Block */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+    <section className="border-t border-gray-100 bg-white py-20" id="invest">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end lg:mb-16">
           <div className="max-w-2xl">
+            <p className="eyebrow">What you can hold</p>
             <ScrollReveal
               as="h2"
-              containerClassName="text-4xl sm:text-5xl font-display font-medium text-brand-dark leading-tight"
+              containerClassName="mt-4 font-display text-4xl leading-tight font-medium text-brand-dark sm:text-5xl"
               enableBlur={true}
               baseOpacity={0.15}
               baseRotation={2}
               blurStrength={6}
             >
-              Access the World's Leading Investment Opportunities
+              One account. The whole global market.
             </ScrollReveal>
           </div>
           <div className="flex-shrink-0">
             <a
-              href="#all-features"
-              className="inline-block px-8 py-3.5 rounded-xl bg-brand-dark font-sans text-sm font-bold text-white hover:bg-brand-dark/95 transition duration-200"
+              href={SIGNUP_URL}
+              className="inline-block rounded-xl bg-brand-dark px-8 py-3.5 font-sans text-sm font-bold text-white transition duration-200 hover:bg-black"
             >
-              View all features
+              Open an Account
             </a>
           </div>
         </div>
 
-        {/* 1) Desktop View: Interactive Grid */}
-        <div className="hidden lg:grid grid-cols-12 gap-8 items-stretch">
-          {/* Tabs Navigation (Left) */}
-          <div className="flex flex-col gap-4 font-sans justify-center col-span-4">
-            {tabs.map((tab, idx) => {
-              const isActive = activeTab === idx;
+        {/* Desktop: vertical tabs */}
+        <div className="hidden grid-cols-12 items-stretch gap-8 lg:grid">
+          <div role="tablist" aria-label="What you can hold" aria-orientation="vertical" className="col-span-4 flex flex-col justify-center gap-3 font-sans">
+            {HOLDINGS.map((holding, index) => {
+              const isActive = activeTab === index;
               return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(idx)}
-                  className={`w-full text-left p-6 rounded-2xl flex items-center justify-between transition-all duration-300 ${
+                  key={holding.id}
+                  ref={(el) => {
+                    tabRefs.current[index] = el;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={`holding-tab-${holding.id}`}
+                  aria-selected={isActive}
+                  aria-controls={`holding-panel-${holding.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveTab(index)}
+                  onKeyDown={(event) => onTabKeyDown(event, index)}
+                  className={`flex w-full items-center justify-between rounded-2xl px-6 py-4 text-left transition-all duration-300 ${
                     isActive
-                      ? 'bg-brand-blue text-white shadow-xl shadow-brand-blue/15'
-                      : 'bg-brand-light text-brand-dark hover:bg-brand-light/75'
+                      ? 'bg-brand-orange text-brand-dark shadow-xl shadow-brand-orange/20'
+                      : 'bg-brand-light text-brand-dark hover:bg-brand-peach'
                   }`}
                 >
-                  <span className="text-xl font-bold">{tab.label}</span>
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                      isActive ? 'bg-white text-brand-blue' : 'bg-white text-brand-dark'
-                    }`}
-                  >
-                    <svg
-                      className={`w-5 h-5 transition-transform duration-300 ${
-                        isActive ? 'rotate-0' : '-rotate-45'
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
-                  </div>
+                  <span className="text-lg font-bold">{holding.title}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand-dark">
+                    <ArrowRight
+                      aria-hidden="true"
+                      className={`h-5 w-5 transition-transform duration-300 ${isActive ? 'rotate-0' : '-rotate-45'}`}
+                    />
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Active Tab Panel (Right) */}
-          <div className="col-span-8 bg-brand-light rounded-3xl p-10 flex flex-row gap-8 items-center border border-gray-100">
-            {/* Visual Graphic */}
-            <div className="w-[355px] h-[320px] rounded-2xl overflow-hidden bg-white border border-gray-200/50 shadow-inner flex-shrink-0">
-              <img
-                src={tabs[activeTab].image}
-                alt={tabs[activeTab].title}
-                className={`w-full h-full object-cover ${tabs[activeTab].imagePos || 'object-center'} transition-all duration-500 hover:scale-105`}
-              />
-            </div>
-
-            {/* Description Info */}
-            <div className="w-1/2 flex flex-col items-start font-sans">
-              {/* Icon Bubble */}
-              <div className="mb-6 relative w-12 h-12 flex items-center justify-center">
-                {tabs[activeTab].iconSrc.endsWith('.png') ? (
-                  <img
-                    src={tabs[activeTab].iconSrc}
-                    className="w-12 h-12 relative z-10 object-contain"
-                    alt=""
-                  />
-                ) : (
-                  <>
-                    <img src={imgEllipse25} className="absolute inset-0 w-full h-full" alt="" />
-                    <img
-                      src={tabs[activeTab].iconSrc}
-                      className="w-5 h-5 relative z-10 brightness-0 text-brand-blue"
-                      alt=""
-                      style={{ filter: 'invert(31%) sepia(85%) saturate(1633%) hue-rotate(218deg) brightness(91%) contrast(92%)' }}
-                    />
-                  </>
-                )}
+          {HOLDINGS.map((holding, index) => (
+            <div
+              key={holding.id}
+              role="tabpanel"
+              id={`holding-panel-${holding.id}`}
+              aria-labelledby={`holding-tab-${holding.id}`}
+              hidden={activeTab !== index}
+              tabIndex={0}
+              className="col-span-8 flex flex-row items-center gap-8 rounded-3xl border border-gray-100 bg-brand-light p-10"
+            >
+              <div className="h-[320px] w-[355px] flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-inner">
+                <img
+                  src={holding.image}
+                  alt=""
+                  width={holding.width}
+                  height={holding.height}
+                  loading="lazy"
+                  decoding="async"
+                  className={`h-full w-full object-cover ${holding.imagePos ?? 'object-center'} transition-transform duration-500 hover:scale-105`}
+                />
               </div>
-
-              {/* Title */}
-              <h3 className="text-3xl font-display font-medium text-brand-dark mb-4">
-                {tabs[activeTab].title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-gray-500 text-base leading-relaxed mb-8">
-                {tabs[activeTab].desc}
-              </p>
-
-              {/* CTA Button */}
-              <a
-                href="#get-started"
-                className="px-8 py-3 rounded-xl bg-brand-dark font-bold text-white hover:bg-brand-dark/95 transition duration-200"
-              >
-                Learn More
-              </a>
+              <div className="flex flex-1 flex-col items-start font-sans">
+                <img src={holding.icon} alt="" width={48} height={48} loading="lazy" decoding="async" className="mb-6 h-12 w-12 object-contain" />
+                <h3 className="mb-4 font-display text-3xl font-medium text-brand-dark">{holding.title}</h3>
+                <p className="mb-5 text-base leading-relaxed text-gray-600">{holding.desc}</p>
+                <span className="mb-8 inline-block rounded-full bg-brand-peach px-3.5 py-1 text-xs font-bold text-brand-orange-strong">
+                  {holding.tag}
+                </span>
+                <a
+                  href="#open"
+                  className="rounded-xl bg-brand-dark px-8 py-3 font-bold text-white transition duration-200 hover:bg-black"
+                >
+                  Contact us
+                </a>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
-        {/* 2) Mobile View: Swipeable Carousel Card */}
-        <div className="lg:hidden flex flex-col items-center w-full">
+        {/* Mobile and tablet: swipeable cards */}
+        <div className="flex w-full flex-col items-center lg:hidden">
           <div
-            ref={containerRef}
-            onScroll={handleScroll}
-            className="w-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-6 pb-2"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            ref={carouselRef}
+            onScroll={handleCarouselScroll}
+            onPointerDown={stopAutoAdvance}
+            onKeyDown={stopAutoAdvance}
+            onFocus={stopAutoAdvance}
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="What you can hold"
+            tabIndex={0}
+            className="flex w-full snap-x snap-mandatory gap-6 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {tabs.map((tab) => (
-              <div key={tab.id} className="w-full flex-shrink-0 snap-start">
-                <div className="bg-brand-light rounded-3xl p-6 flex flex-col gap-6 items-center border border-gray-100">
-                  {/* Visual Graphic */}
-                  <div className="w-full h-[240px] rounded-2xl overflow-hidden bg-white border border-gray-200/50 shadow-inner flex-shrink-0">
+            {HOLDINGS.map((holding, index) => (
+              <article
+                key={holding.id}
+                aria-roledescription="slide"
+                aria-label={`${index + 1} of ${HOLDINGS.length}: ${holding.title}`}
+                className="w-full flex-shrink-0 snap-start"
+              >
+                <div className="flex flex-col items-center gap-6 rounded-3xl border border-gray-100 bg-brand-light p-6">
+                  <div className="h-[240px] w-full flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-inner">
                     <img
-                      src={tab.image}
-                      alt={tab.title}
-                      className="w-full h-full object-cover"
+                      src={holding.image}
+                      alt=""
+                      width={holding.width}
+                      height={holding.height}
+                      loading="lazy"
+                      decoding="async"
+                      className={`h-full w-full object-cover ${holding.imagePos ?? 'object-center'}`}
                     />
                   </div>
-
-                  {/* Description Info */}
-                  <div className="w-full flex flex-col items-center text-center font-sans">
-                    {/* Icon Bubble */}
-                    <div className="mb-4 relative w-12 h-12 flex items-center justify-center">
-                      <img
-                        src={tab.iconSrc}
-                        className="w-12 h-12 relative z-10 object-contain"
-                        alt=""
-                      />
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-2xl font-display font-medium text-brand-dark mb-2">
-                      {tab.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                      {tab.desc}
-                    </p>
-
-                    {/* CTA Button */}
+                  <div className="flex w-full flex-col items-center text-center font-sans">
+                    <img src={holding.icon} alt="" width={48} height={48} loading="lazy" decoding="async" className="mb-4 h-12 w-12 object-contain" />
+                    <h3 className="mb-2 font-display text-2xl font-medium text-brand-dark">{holding.title}</h3>
+                    <p className="mb-4 text-sm leading-relaxed text-gray-600">{holding.desc}</p>
+                    <span className="mb-6 inline-block rounded-full bg-brand-peach px-3.5 py-1 text-xs font-bold text-brand-orange-strong">
+                      {holding.tag}
+                    </span>
                     <a
-                      href="#get-started"
-                      className="px-8 py-3 rounded-xl bg-brand-dark font-bold text-white text-sm hover:bg-brand-dark/95 transition duration-200"
+                      href="#open"
+                      className="rounded-xl bg-brand-dark px-8 py-3 text-sm font-bold text-white transition duration-200 hover:bg-black"
                     >
-                      Learn More
+                      Contact us
                     </a>
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
 
-          {/* Dot / Pill Indicators */}
-          <div className="flex justify-center items-center gap-2.5 mt-6">
-            {tabs.map((tab, idx) => (
+          <div className="mt-4 flex items-center justify-center gap-1">
+            {HOLDINGS.map((holding, index) => (
               <button
-                key={tab.id}
-                onClick={() => scrollToTab(idx)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  activeTab === idx ? 'w-8 bg-brand-blue' : 'w-2.5 bg-gray-200'
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
+                key={holding.id}
+                type="button"
+                onClick={() => {
+                  stopAutoAdvance();
+                  scrollCarouselTo(index);
+                  setActiveTab(index);
+                }}
+                aria-label={`Show ${holding.title}`}
+                aria-current={activeTab === index ? 'true' : undefined}
+                className="flex h-8 items-center justify-center px-1.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`block h-2.5 rounded-full transition-all duration-300 ${
+                    activeTab === index ? 'w-8 bg-brand-orange' : 'w-2.5 bg-gray-300'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>
+
+        <p className="mt-8 font-sans text-xs leading-relaxed text-gray-600 sm:text-[13px]">{FOOTNOTE}</p>
       </div>
     </section>
   );
