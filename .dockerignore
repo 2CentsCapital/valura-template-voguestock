@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+.git
+.gitignore
+.netlify
+.vite
+.vscode
+.idea
+*.log
+*.local
+.DS_Store
+Thumbs.db
+Dockerfile
+.dockerignore
+README.md
