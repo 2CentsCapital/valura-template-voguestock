@@ -1,7 +1,7 @@
-import { useRef, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties } from 'react';
 import { Archive, Award, BadgeCheck, Building2, Globe } from 'lucide-react';
 import ScrollReveal from './ui/ScrollReveal';
-import { useLoopZone } from '../lib/motion';
+import { useLoopZone, useMotionPaused } from '../lib/motion';
 
 // The live landing's "Regulation & registrations" card.
 const REGISTRATIONS = [
@@ -27,7 +27,48 @@ const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProp
 
 export default function TrustSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLUListElement>(null);
   const loops = useLoopZone(sectionRef);
+  const motionPaused = useMotionPaused();
+  // The still layout applies while animations are paused, or when the inline script in index.html did not run.
+  const still = motionPaused || !document.documentElement.classList.contains('js');
+
+  // In the still layout the highlights sit in centred wrapped rows (index.css). Row breaks depend on the width and the
+  // font, so mark the first item of each row; separators then appear only between items on one row.
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const items = Array.from(track.querySelectorAll<HTMLElement>('.marquee-item:not(.marquee-copy)'));
+    const clear = () => {
+      track.removeAttribute('data-rows-ready');
+      items.forEach((item) => item.removeAttribute('data-row-start'));
+    };
+    if (!still) {
+      clear();
+      return;
+    }
+
+    let active = true;
+    const markRows = () => {
+      if (!active) return;
+      let previousTop: number | null = null;
+      for (const item of items) {
+        const top = item.getBoundingClientRect().top;
+        item.toggleAttribute('data-row-start', previousTop === null || Math.abs(top - previousTop) > 2);
+        previousTop = top;
+      }
+      track.setAttribute('data-rows-ready', '');
+    };
+    markRows();
+    const observer = new ResizeObserver(markRows);
+    observer.observe(track);
+    document.fonts.ready.then(markRows);
+    return () => {
+      active = false;
+      observer.disconnect();
+      clear();
+    };
+  }, [still]);
 
   return (
     <section
@@ -96,20 +137,25 @@ export default function TrustSection() {
         </div>
       </div>
 
-      {/* Slow highlights marquee: pauses on hover, off screen and with the Pause animations toggle */}
+      {/* Slow highlights marquee: pauses on hover and off screen; while animations are paused it becomes still rows */}
       <div data-reveal="fade" className="mt-16 border-t border-gray-100 bg-brand-light py-5 sm:mt-20">
         <div className="marquee">
-          <ul aria-label="Highlights" className="marquee-track loop">
-            {[...HIGHLIGHTS, ...HIGHLIGHTS].map((item, index) => (
-              <li
-                key={`${item}-${index}`}
-                aria-hidden={index >= HIGHLIGHTS.length ? true : undefined}
-                className="flex items-center gap-3 px-6 font-sans text-sm font-semibold whitespace-nowrap text-gray-700"
-              >
-                <span aria-hidden="true" className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-orange" />
-                {item}
-              </li>
-            ))}
+          <ul ref={trackRef} aria-label="Highlights" className="marquee-track loop">
+            {[...HIGHLIGHTS, ...HIGHLIGHTS].map((item, index) => {
+              const copy = index >= HIGHLIGHTS.length;
+              return (
+                <li
+                  key={`${item}-${index}`}
+                  aria-hidden={copy ? true : undefined}
+                  className={`marquee-item flex items-center gap-3 px-6 font-sans text-sm font-semibold whitespace-nowrap text-gray-700${
+                    copy ? ' marquee-copy' : ''
+                  }`}
+                >
+                  <span aria-hidden="true" className="marquee-dot h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-orange" />
+                  {item}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

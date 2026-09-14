@@ -93,8 +93,9 @@ Designed motion runs for every visitor, including visitors whose system asks for
   micro-interactions (card lift, button sheen and arrow nudge, sliding nav underline).
 - **Reduced motion:** Lenis smooth scrolling and smooth anchor jumps are switched off, and ambient loops run about 1.5
   times slower. No effect is scrubbed to the scroll position, so nothing else changes.
-- **Pause animations:** a toggle in the footer stops the ambient loops, the marquee, the dome, the WebGL and canvas
-  effects and carousel auto-advance, shows reveals and count-ups at their final state, and turns smooth scrolling off.
+- **Pause animations:** a toggle in the footer stops the ambient loops, the dome, the WebGL and canvas effects and
+  carousel auto-advance, sets the highlights out once in centred wrapped rows (no edge fade, separators only between
+  items on the same row), shows reveals and count-ups at their final state, and turns smooth scrolling off.
   The choice is stored in `localStorage` under `voguestock-motion-paused` and applied by an inline script in
   `index.html` before first paint. The marquee also pauses on hover; the carousel pauses on hover, on keyboard focus
   and for six seconds after a manual swipe. The demo video plays only when clicked.

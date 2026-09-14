@@ -321,21 +321,57 @@
   animation: counter-ccw calc(var(--orbit-duration, 24s) * var(--motion-slow)) linear infinite;
 }
 
-.marquee {
+/* Moving state: one long track that loops, fades out at both edges and pauses on hover. */
+.js:not(.motion-paused) .marquee {
   overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 
-.marquee-track {
+.js:not(.motion-paused) .marquee-track {
   display: flex;
   width: max-content;
   animation: marquee calc(46s * var(--motion-slow)) linear infinite;
 }
 
-.marquee:hover .marquee-track,
-.marquee:focus-within .marquee-track {
+.js:not(.motion-paused) .marquee:hover .marquee-track,
+.js:not(.motion-paused) .marquee:focus-within .marquee-track {
   animation-play-state: paused;
+}
+
+/* Still state (animations paused, or no JavaScript): the highlights appear once, in centred wrapped rows, with no edge
+   fade. Separators show only between two items on the same row; TrustSection marks the first item of each row. */
+:is(html.motion-paused, html:not(.js)) .marquee-track {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 10px;
+  padding-inline: 16px;
+}
+
+:is(html.motion-paused, html:not(.js)) .marquee-copy,
+:is(html.motion-paused, html:not(.js)) .marquee-dot {
+  display: none;
+}
+
+:is(html.motion-paused, html:not(.js)) .marquee-item {
+  position: relative;
+  justify-content: center;
+  padding-inline: 20px;
+  text-align: center;
+  white-space: normal;
+}
+
+:is(html.motion-paused, html:not(.js)) .marquee-track[data-rows-ready] .marquee-item:not([data-row-start])::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 9999px;
+  background-color: var(--color-brand-orange);
 }
 
 /* Soft ring that invites a click on the demo video's play button. */
