@@ -42,9 +42,20 @@
   contain: layout paint size;
 }
 
+/* One slow turn every two minutes (three under reduced motion); paused off screen and by the Pause animations toggle. */
 .sphere {
   transform: translateZ(calc(var(--radius) * -1));
   will-change: transform;
+  animation: dome-spin calc(120s * var(--motion-slow, 1)) linear infinite;
+}
+
+@keyframes dome-spin {
+  from {
+    transform: translateZ(calc(var(--radius) * -1)) rotateY(0deg);
+  }
+  to {
+    transform: translateZ(calc(var(--radius) * -1)) rotateY(-360deg);
+  }
 }
 
 .overlay,

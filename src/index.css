@@ -26,6 +26,25 @@
   --color-gray-700: #44403c;
   --color-gray-800: #292524;
   --color-gray-900: #1c1917;
+
+  /* Motion uses one curve family: ease-out for UI transitions and reveals, its in-out sibling for ambient loops,
+     linear only for continuous rotation and the marquee. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 250ms;
+}
+
+:root {
+  /* Ambient loop duration multiplier: loops run a little slower under reduced motion, never frozen. */
+  --motion-slow: 1;
+  --reveal-duration: 760ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-slow: 1.5;
+  }
 }
 
 @layer base {
@@ -97,13 +116,146 @@
   }
 }
 
+/* Native smooth anchor scrolling only without reduced motion and while animations run; Lenis takes over when active. */
 @media (prefers-reduced-motion: no-preference) {
-  html {
+  html:not(.motion-paused) {
     scroll-behavior: smooth;
   }
 }
 
-/* Orbit rings in the Why section */
+/* ---------- Entrance reveals (timing decided by src/lib/reveal.ts) ---------- */
+
+[data-reveal] {
+  transition:
+    opacity var(--reveal-duration) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* Hidden only while JavaScript runs, animations are not paused and the element has not been revealed yet. */
+.js:not(.motion-paused) [data-reveal]:not([data-revealed]) {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-y, 24px), 0) scale(var(--reveal-scale, 1));
+}
+
+[data-reveal="fade"] {
+  --reveal-y: 0px;
+}
+
+[data-reveal="rise"] {
+  --reveal-y: 48px;
+}
+
+[data-reveal="pop"] {
+  --reveal-y: 0.15em;
+  --reveal-scale: 0.6;
+}
+
+[data-reveal="zoom"] {
+  --reveal-y: 0px;
+  --reveal-scale: 1.08;
+}
+
+/* Word-by-word headings: the heading stays in place while its words rise in sequence. */
+.js:not(.motion-paused) [data-reveal="words"]:not([data-revealed]) {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-word {
+  display: inline-block;
+  transition:
+    opacity 640ms var(--ease-out),
+    transform 640ms var(--ease-out);
+  transition-delay: calc(var(--reveal-delay, 0ms) + var(--word-index, 0) * 45ms);
+}
+
+.js:not(.motion-paused) [data-reveal="words"]:not([data-revealed]) .reveal-word {
+  opacity: 0;
+  transform: translate3d(0, 0.4em, 0);
+}
+
+@media print {
+  [data-reveal],
+  .reveal-word {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---------- Ambient loops ---------- */
+/* Loops run for every visitor, pause off screen (data-loops="off") and stop with the Pause animations toggle. */
+
+.motion-paused .loop,
+.motion-paused .loop::before,
+.motion-paused .loop::after,
+[data-loops="off"] .loop,
+[data-loops="off"] .loop::before,
+[data-loops="off"] .loop::after {
+  animation-play-state: paused !important;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0) rotate(-4deg);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes orbit-cw {
   from {
     transform: rotate(var(--start-angle));
@@ -140,8 +292,132 @@
   }
 }
 
-.orbit-paused .orbit-anim {
-  animation-play-state: paused !important;
+.bob {
+  animation: bob calc(5.5s * var(--motion-slow)) var(--ease-in-out) infinite;
+  animation-delay: var(--loop-delay, 0s);
+}
+
+.float {
+  animation: float calc(7s * var(--motion-slow)) var(--ease-in-out) infinite;
+}
+
+.breathe {
+  animation: breathe calc(10s * var(--motion-slow)) var(--ease-in-out) infinite;
+}
+
+.orbit-cw {
+  animation: orbit-cw calc(var(--orbit-duration, 24s) * var(--motion-slow)) linear infinite;
+}
+
+.orbit-ccw {
+  animation: orbit-ccw calc(var(--orbit-duration, 24s) * var(--motion-slow)) linear infinite;
+}
+
+.counter-cw {
+  animation: counter-cw calc(var(--orbit-duration, 24s) * var(--motion-slow)) linear infinite;
+}
+
+.counter-ccw {
+  animation: counter-ccw calc(var(--orbit-duration, 24s) * var(--motion-slow)) linear infinite;
+}
+
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee calc(46s * var(--motion-slow)) linear infinite;
+}
+
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Soft ring that invites a click on the demo video's play button. */
+.pulse-ring::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 2px solid rgb(255 255 255 / 0.85);
+  opacity: 0;
+  pointer-events: none;
+  animation: pulse-ring calc(2.6s * var(--motion-slow)) var(--ease-out) infinite;
+}
+
+.motion-paused .pulse-ring::before {
+  animation: none;
+}
+
+.pop-in {
+  animation: pop-in 520ms var(--ease-out) both;
+}
+
+.motion-paused .pop-in {
+  animation: none;
+}
+
+/* ---------- Micro-interactions ---------- */
+
+/* Cards lift on hover; the shadow is a pseudo-element faded with opacity so only transform and opacity animate. */
+.lift {
+  position: relative;
+  transition: translate 320ms var(--ease-out);
+}
+
+.lift::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 24px 48px -20px rgb(36 22 9 / 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .lift:hover {
+    translate: 0 -4px;
+  }
+
+  .lift:hover::after {
+    opacity: 1;
+  }
+}
+
+/* A light sheen sweeps across primary buttons on hover and keyboard focus. */
+.sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.45) 50%, transparent 70%);
+  transform: translateX(-130%);
+}
+
+.sheen:focus-visible::before {
+  transform: translateX(130%);
+  transition: transform 700ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .sheen:hover::before {
+    transform: translateX(130%);
+    transition: transform 700ms var(--ease-out);
+  }
 }
 
 /* Scrollbar */
@@ -157,19 +433,4 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #d3b196;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .orbit-anim {
-    animation: none !important;
-  }
 }

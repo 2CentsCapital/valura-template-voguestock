@@ -5,7 +5,7 @@ import iconFunds from '../assets/icons/funds.webp';
 import iconBonds from '../assets/icons/bonds.webp';
 import iconStructured from '../assets/icons/structured.webp';
 import iconCoin from '../assets/icons/coin.webp';
-import { useInView, usePrefersReducedMotion } from '../lib/motion';
+import { useLoopZone } from '../lib/motion';
 
 export interface DomeGalleryProps {
   images?: string[];
@@ -17,7 +17,6 @@ export interface DomeGalleryProps {
   segments?: number;
   imageBorderRadius?: string;
   grayscale?: boolean;
-  autoRotateSpeed?: number;
 }
 
 // Decorative tiles: the template's own 3D product icons.
@@ -32,10 +31,6 @@ interface DomeItem {
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
-const wrapAngleSigned = (deg: number) => {
-  const a = (((deg + 180) % 360) + 360) % 360;
-  return a - 180;
-};
 
 function buildItems(pool: string[], segments: number): DomeItem[] {
   const xCols = Array.from({ length: segments }, (_, i) => -37 + i * 2);
@@ -46,8 +41,9 @@ function buildItems(pool: string[], segments: number): DomeItem[] {
 }
 
 /**
- * Rotating dome of tiles. Purely decorative: hidden from assistive technology, no pointer
- * interaction, rotation runs only while on screen and never with reduced motion.
+ * Rotating dome of tiles. Purely decorative: hidden from assistive technology and not interactive. The rotation is a
+ * CSS loop (DomeGallery.css): it runs for every visitor, a little slower under reduced motion, pauses off screen and
+ * stops with the Pause animations toggle.
  */
 export default function DomeGallery({
   images = DEFAULT_IMAGES,
@@ -59,36 +55,15 @@ export default function DomeGallery({
   segments = 35,
   imageBorderRadius = '30px',
   grayscale = false,
-  autoRotateSpeed = -0.05,
 }: DomeGalleryProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const sphereRef = useRef<HTMLDivElement>(null);
-  const rotationRef = useRef(0);
-  const reducedMotion = usePrefersReducedMotion();
-  const inView = useInView(rootRef, '100px');
+  const loops = useLoopZone(rootRef, '100px');
   const items = useMemo(() => buildItems(images, segments), [images, segments]);
-
-  const applyTransform = (yDeg: number) => {
-    const el = sphereRef.current;
-    if (el) el.style.transform = `translateZ(calc(var(--radius) * -1)) rotateY(${yDeg}deg)`;
-  };
-
-  useEffect(() => {
-    if (reducedMotion || !inView || autoRotateSpeed === 0) return;
-    let raf = 0;
-    const loop = () => {
-      rotationRef.current = wrapAngleSigned(rotationRef.current + autoRotateSpeed);
-      applyTransform(rotationRef.current);
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [reducedMotion, inView, autoRotateSpeed]);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const ro = new ResizeObserver((entries) => {
+    const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
       const w = Math.max(1, width);
       const h = Math.max(1, height);
@@ -113,10 +88,9 @@ export default function DomeGallery({
       }
       const radius = clamp(Math.min(basis * fit, h * 1.35), minRadius, maxRadius);
       root.style.setProperty('--radius', `${Math.round(radius)}px`);
-      applyTransform(rotationRef.current);
     });
-    ro.observe(root);
-    return () => ro.disconnect();
+    observer.observe(root);
+    return () => observer.disconnect();
   }, [fit, fitBasis, minRadius, maxRadius]);
 
   const rootStyle = {
@@ -128,10 +102,10 @@ export default function DomeGallery({
   } as CSSProperties;
 
   return (
-    <div ref={rootRef} className="sphere-root" style={rootStyle} aria-hidden="true">
+    <div ref={rootRef} data-loops={loops} className="sphere-root" style={rootStyle} aria-hidden="true">
       <div className="sphere-main">
         <div className="stage">
-          <div ref={sphereRef} className="sphere">
+          <div className="sphere loop">
             {items.map((item, i) => (
               <div
                 key={`${item.x},${item.y},${i}`}

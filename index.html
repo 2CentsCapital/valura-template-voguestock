@@ -3,6 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Before first paint: enable entrance reveals and apply a stored "Pause animations" choice.
+      (function () {
+        var root = document.documentElement;
+        root.classList.add('js');
+        try {
+          if (window.localStorage.getItem('voguestock-motion-paused') === '1') root.classList.add('motion-paused');
+        } catch (e) {}
+      })();
+    </script>
     <title>Voguestock powered by Valura.Ai: Global Investing from India</title>
     <meta
       name="description"
@@ -41,6 +51,20 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" />
   </head>
   <body>
+    <noscript>
+      <div style="max-width: 640px; margin: 64px auto; padding: 0 24px; font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #241609">
+        <p style="margin: 0; font-weight: 700; color: #a34d0e">Voguestock powered by Valura.Ai</p>
+        <h1 style="margin: 12px 0 16px; font-size: 34px; line-height: 1.15">Invest in the whole world, without leaving India.</h1>
+        <p style="margin: 0 0 16px">
+          This page needs JavaScript to show its content. You can still open an account at
+          <a href="https://voguestock-app.valura.ai/auth?mode=signup" style="color: #a34d0e">voguestock-app.valura.ai</a>
+          or write to Voguestock at <a href="mailto:Support@voguestock.in" style="color: #a34d0e">Support@voguestock.in</a>.
+        </p>
+        <p style="margin: 0; font-size: 13px; color: #57534e">
+          Investments in securities markets are subject to market risks. Read all related documents carefully before investing.
+        </p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -46,7 +46,10 @@ const ORBITS: { size: string; duration: number; items: OrbitItem[] }[] = [
   },
 ];
 
-/** Decorative orbit rings around a particle globe. Animations pause off screen and stop for reduced motion. */
+/**
+ * Decorative orbit rings around a particle globe. The rings are CSS loops and the globe is a canvas: both run for
+ * every visitor, pause off screen and stop with the Pause animations toggle.
+ */
 export default function OrbitingCirclesGlobeDemo() {
   const rootRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef, '100px');
@@ -54,7 +57,8 @@ export default function OrbitingCirclesGlobeDemo() {
   return (
     <div
       ref={rootRef}
-      className={`relative flex h-[380px] w-full justify-center overflow-hidden md:h-[560px] ${inView ? '' : 'orbit-paused'}`}
+      data-loops={inView ? 'on' : 'off'}
+      className="relative flex h-[380px] w-full justify-center overflow-hidden md:h-[560px]"
     >
       <div className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-square w-75 -translate-x-1/2 translate-y-1/2 md:w-145">
         <ParticleSphereAnimation active={inView} />
@@ -62,8 +66,6 @@ export default function OrbitingCirclesGlobeDemo() {
 
       {ORBITS.map((orbit, orbitIndex) => {
         const clockwise = orbitIndex % 2 === 0;
-        const orbitAnimation = clockwise ? 'orbit-cw' : 'orbit-ccw';
-        const counterAnimation = clockwise ? 'counter-cw' : 'counter-ccw';
         const angleStep = 360 / orbit.items.length;
 
         return (
@@ -76,29 +78,40 @@ export default function OrbitingCirclesGlobeDemo() {
               return (
                 <div
                   key={itemIndex}
-                  className="orbit-anim absolute top-0 left-1/2 -ml-8 flex h-1/2 origin-bottom flex-col items-center justify-start"
+                  data-orbit-item
+                  className={`loop ${clockwise ? 'orbit-cw' : 'orbit-ccw'} absolute top-0 left-1/2 -ml-8 flex h-1/2 origin-bottom flex-col items-center justify-start`}
                   style={
                     {
                       '--start-angle': `${angle}deg`,
+                      '--orbit-duration': `${orbit.duration}s`,
                       transform: `rotate(${angle}deg)`,
-                      animation: `${orbitAnimation} ${orbit.duration}s linear infinite`,
                     } as CSSProperties
                   }
                 >
                   <div
-                    className="orbit-anim relative z-10 -mt-6 flex h-11 w-11 items-center justify-center rounded-full border border-gray-200/80 bg-white p-1.5 shadow-md md:-mt-7 md:h-14 md:w-14"
+                    className={`loop ${clockwise ? 'counter-cw' : 'counter-ccw'} relative z-10 -mt-6 flex h-11 w-11 items-center justify-center rounded-full border border-gray-200/80 bg-white p-1.5 shadow-md md:-mt-7 md:h-14 md:w-14`}
                     style={
                       {
                         '--counter-offset': `${-angle}deg`,
+                        '--orbit-duration': `${orbit.duration}s`,
                         transform: `rotate(${-angle}deg)`,
-                        animation: `${counterAnimation} ${orbit.duration}s linear infinite`,
                       } as CSSProperties
                     }
                   >
                     {item.kind === 'icon' ? (
-                      <img src={item.src} alt="" width={56} height={56} loading="lazy" decoding="async" className="pointer-events-none h-full w-full rounded-full object-contain" />
+                      <img
+                        src={item.src}
+                        alt=""
+                        width={56}
+                        height={56}
+                        loading="lazy"
+                        decoding="async"
+                        className="pointer-events-none h-full w-full rounded-full object-contain"
+                      />
                     ) : (
-                      <span className="font-sans text-[10px] font-extrabold tracking-wide text-brand-dark md:text-xs">{item.label}</span>
+                      <span className="font-sans text-[10px] font-extrabold tracking-wide text-brand-dark md:text-xs">
+                        {item.label}
+                      </span>
                     )}
                   </div>
                 </div>

@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FeatureTabs from './components/FeatureTabs';
@@ -14,34 +12,29 @@ import Faq from './components/Faq';
 import AccountForm from './components/AccountForm';
 import Footer from './components/Footer';
 import MobileCtaBar from './components/MobileCtaBar';
-import ScrollReveal from './components/ui/ScrollReveal';
-import { prefersReducedMotion } from './lib/motion';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useMotionPaused, usePrefersReducedMotion } from './lib/motion';
+import { startReveals } from './lib/reveal';
 
 export default function App() {
-  useEffect(() => {
-    // Smooth scrolling is an enhancement only: reduced-motion users keep native scrolling.
-    if (prefersReducedMotion()) return;
+  const reducedMotion = usePrefersReducedMotion();
+  const motionPaused = useMotionPaused();
 
+  // One-shot entrance reveals for every visitor (runs after the sections have mounted).
+  useEffect(() => startReveals(), []);
+
+  // Smooth scrolling is the one effect switched off under reduced motion; it also stops while animations are paused.
+  useEffect(() => {
+    if (reducedMotion || motionPaused) return;
     const lenis = new Lenis({
       duration: 1.1,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       // In-page links scroll smoothly and respect each section's scroll-margin-top.
       anchors: true,
+      autoRaf: true,
     });
-
-    lenis.on('scroll', ScrollTrigger.update);
-    const update = (time: number) => lenis.raf(time * 1000);
-    gsap.ticker.add(update);
-    gsap.ticker.lagSmoothing(0);
-
-    return () => {
-      gsap.ticker.remove(update);
-      lenis.destroy();
-    };
-  }, []);
+    return () => lenis.destroy();
+  }, [reducedMotion, motionPaused]);
 
   // Section order follows the live landing: hero and stats, invest, why, how, trust, demo, FAQ, open, footer.
   return (
@@ -57,39 +50,16 @@ export default function App() {
 
       <main id="main" tabIndex={-1} className="flex-grow bg-white pt-20 focus:outline-none">
         <Hero />
-
-        <ScrollReveal enableBlur={false}>
-          <FeatureTabs />
-        </ScrollReveal>
-
-        <ScrollReveal enableBlur={false}>
-          <Workflow />
-        </ScrollReveal>
-
-        <ScrollReveal enableBlur={false}>
-          <Operations />
-        </ScrollReveal>
-
-        <ScrollReveal enableBlur={false}>
-          <TrustSection />
-        </ScrollReveal>
-
-        <ScrollReveal enableBlur={false}>
-          <VideoSection />
-        </ScrollReveal>
-
-        <ScrollReveal enableBlur={false}>
-          <Faq />
-        </ScrollReveal>
-
-        <ScrollReveal enableBlur={false}>
-          <AccountForm />
-        </ScrollReveal>
+        <FeatureTabs />
+        <Workflow />
+        <Operations />
+        <TrustSection />
+        <VideoSection />
+        <Faq />
+        <AccountForm />
       </main>
 
-      <ScrollReveal enableBlur={false}>
-        <Footer />
-      </ScrollReveal>
+      <Footer />
 
       <MobileCtaBar />
     </div>

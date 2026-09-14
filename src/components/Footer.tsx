@@ -1,7 +1,9 @@
+import type { CSSProperties } from 'react';
 import jointLogoWhite from '../assets/brand/joint-logo-white.webp';
 import wordmark from '../assets/brand/voguestock-wordmark.svg';
 import Velaris from './ui/velaris';
 import StoreButtons from './StoreButtons';
+import MotionToggle from './MotionToggle';
 import { CONTACT, RISK_LINE, SIGNUP_URL, VOGUESTOCK_LEGAL_LINKS } from '../config';
 
 // The live landing's footer "Explore" list.
@@ -14,7 +16,9 @@ const EXPLORE_LINKS = [
 ];
 
 const FOOTER_COLORS = ['#6b2f0d', '#8f430c', '#1a120b', '#d9661a'];
-const linkClass = 'text-gray-300 transition duration-200 hover:text-white';
+const linkClass = 'text-gray-300 transition-colors duration-300 hover:text-white';
+
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -27,7 +31,7 @@ export default function Footer() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 font-sans sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 border-b border-white/15 pb-12 lg:grid-cols-12">
-          <div className="lg:col-span-5">
+          <div data-reveal className="lg:col-span-5">
             <img
               src={jointLogoWhite}
               alt="Voguestock powered by Valura.Ai"
@@ -48,7 +52,7 @@ export default function Footer() {
           </div>
 
           <div className="grid grid-cols-1 gap-10 text-base sm:grid-cols-3 lg:col-span-7">
-            <nav aria-label="Footer">
+            <nav data-reveal style={revealDelay(90)} aria-label="Footer">
               <h2 className="mb-5 font-display text-lg font-medium text-white">Explore</h2>
               <ul className="space-y-3">
                 {EXPLORE_LINKS.map((link) => (
@@ -61,7 +65,7 @@ export default function Footer() {
               </ul>
             </nav>
 
-            <div>
+            <div data-reveal style={revealDelay(180)}>
               <h2 className="mb-5 font-display text-lg font-medium text-white">Contact</h2>
               <ul className="space-y-3">
                 <li>
@@ -85,7 +89,7 @@ export default function Footer() {
               </ul>
             </div>
 
-            <div>
+            <div data-reveal style={revealDelay(270)}>
               <h2 className="mb-5 font-display text-lg font-medium text-white">Voguestock policies</h2>
               <ul className="space-y-3">
                 {VOGUESTOCK_LEGAL_LINKS.map((link) => (
@@ -100,7 +104,10 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 border-b border-white/15 py-8 text-sm leading-relaxed text-gray-300 md:grid-cols-2">
+        <div
+          data-reveal="fade"
+          className="grid grid-cols-1 gap-6 border-b border-white/15 py-8 text-sm leading-relaxed text-gray-300 md:grid-cols-2"
+        >
           <p>
             <strong className="font-semibold text-white">Voguestock:</strong> Vogue Commercial Co. Ltd. · SEBI Reg.
             INZ000277536 (NSE, BSE) · NSDL IN-DP-119-2015 · MF ARN 166877 · IRDAI CA0190.
@@ -112,7 +119,7 @@ export default function Footer() {
           </p>
         </div>
 
-        <div className="space-y-3 py-8 text-xs leading-relaxed text-gray-400 sm:text-[13px]">
+        <div data-reveal="fade" className="space-y-3 py-8 text-xs leading-relaxed text-gray-400 sm:text-[13px]">
           <p className="text-sm font-semibold text-white">{RISK_LINE}</p>
           <p>
             Global investing carries additional currency, country and regulatory risks. Structured products carry the
@@ -123,12 +130,17 @@ export default function Footer() {
           </p>
         </div>
 
-        <div className="border-t border-white/15 pt-6 text-center text-sm text-gray-400 sm:text-left">
-          <p>© {year} Vogue Commercial Co. Ltd., in partnership with Valura.Ai.</p>
+        <div className="flex flex-col items-center gap-4 border-t border-white/15 pt-6 text-sm text-gray-400 sm:flex-row sm:justify-between">
+          <p className="text-center sm:text-left">© {year} Vogue Commercial Co. Ltd., in partnership with Valura.Ai.</p>
+          <MotionToggle />
         </div>
       </div>
 
-      <div aria-hidden="true" className="pointer-events-none relative z-10 mt-12 mb-[-40px] flex w-full justify-center px-4 select-none">
+      <div
+        aria-hidden="true"
+        data-reveal="rise"
+        className="pointer-events-none relative z-10 mt-12 mb-[-40px] flex w-full justify-center px-4 select-none"
+      >
         <img src={wordmark} alt="" width={1713} height={181} loading="lazy" decoding="async" className="h-auto w-full max-w-[1800px]" />
       </div>
     </footer>
