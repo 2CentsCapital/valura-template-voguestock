@@ -10,8 +10,8 @@ This version keeps the template's layout, motion and visual language and carries
 
 ## Stack
 
-React 19, Vite 8, TypeScript, Tailwind CSS v4, GSAP (ScrollTrigger) and Lenis for motion, lucide-react icons.
-Leads are posted to Web3Forms from the browser. No backend.
+React 19, Vite 8, TypeScript and Tailwind CSS v4. Motion uses CSS transitions and keyframes with a small reveal
+manager, Lenis for smooth scrolling and lucide-react icons. Leads are posted to Web3Forms from the browser. No backend.
 
 ## Page map
 
@@ -21,7 +21,7 @@ Leads are posted to Web3Forms from the browser. No backend.
 | What you can hold (six product shelves) | `#invest` | `src/components/FeatureTabs.tsx` |
 | Why | `#why` | `src/components/Workflow.tsx` |
 | How it works, with "Ready when you are" | `#how` | `src/components/Operations.tsx` |
-| Trust, regulation and registrations | `#trust` | `src/components/TrustSection.tsx` |
+| Trust, regulation and registrations, highlights marquee | `#trust` | `src/components/TrustSection.tsx` |
 | Product demo video | `#demo` | `src/components/VideoSection.tsx` |
 | FAQ | `#faq` | `src/components/Faq.tsx` |
 | Open an account (lead form) | `#open` | `src/components/AccountForm.tsx` |
@@ -81,6 +81,32 @@ npm run preview   # serve dist/
   Defaults to `https://voguestock.valura.ai`; override it at build time when the page is served from another host.
 - `src/config.ts`: sign-up and sign-in URLs (`voguestock-app.valura.ai`), App Store and Google Play links, Web3Forms
   endpoint, key and subject, Voguestock contact details and policy links.
+
+## Motion
+
+Designed motion runs for every visitor, including visitors whose system asks for reduced motion.
+
+- **What moves:** one-shot entrance reveals (sections with a short stagger, headings word by word, the hero headline
+  line by line), count-ups in the stats band, ambient loops (bobbing hero icons, the floating dashboard, breathing
+  product images, orbit rings, the rotating dome of tiles, the highlights marquee, a soft pulse on the demo play
+  button), the WebGL backgrounds and the particle globe, carousel auto-advance on small screens, and hover and focus
+  micro-interactions (card lift, button sheen and arrow nudge, sliding nav underline).
+- **Reduced motion:** Lenis smooth scrolling and smooth anchor jumps are switched off, and ambient loops run about 1.5
+  times slower. No effect is scrubbed to the scroll position, so nothing else changes.
+- **Pause animations:** a toggle in the footer stops the ambient loops, the marquee, the dome, the WebGL and canvas
+  effects and carousel auto-advance, shows reveals and count-ups at their final state, and turns smooth scrolling off.
+  The choice is stored in `localStorage` under `voguestock-motion-paused` and applied by an inline script in
+  `index.html` before first paint. The marquee also pauses on hover; the carousel pauses on hover, on keyboard focus
+  and for six seconds after a manual swipe. The demo video plays only when clicked.
+- **Performance guards:** reveals and loops animate `transform` and `opacity` only (FAQ answers also animate their row
+  height); CSS loops pause off screen; canvases pause off screen and in hidden tabs; WebGL renders at no more than 1.5
+  device pixels per CSS pixel; a timed sweep reveals anything in or above the viewport if the IntersectionObserver
+  never fires. Without JavaScript, a short `<noscript>` summary shows the headline, the sign-up link, the Voguestock
+  contact and the risk line.
+- **Code:** `src/lib/motion.ts` (pause store and hooks), `src/lib/reveal.ts` (reveal manager) and `src/index.css`
+  (easing tokens, reveal states, keyframes and micro-interactions). To reveal an element, add `data-reveal` (optionally
+  `fade`, `rise`, `pop` or `zoom`) and a `--reveal-delay`; to add a CSS loop, give it the `loop` class inside an element
+  that carries `data-loops` from `useLoopZone`.
 
 ## Deploy
 

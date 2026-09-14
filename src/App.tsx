@@ -23,6 +23,7 @@ export default function App() {
   useEffect(() => startReveals(), []);
 
   // Smooth scrolling is the one effect switched off under reduced motion; it also stops while animations are paused.
+  // Lenis is driven by a frame loop that runs only while it is scrolling, so an idle page schedules no frames.
   useEffect(() => {
     if (reducedMotion || motionPaused) return;
     const lenis = new Lenis({
@@ -31,9 +32,45 @@ export default function App() {
       smoothWheel: true,
       // In-page links scroll smoothly and respect each section's scroll-margin-top.
       anchors: true,
-      autoRaf: true,
+      autoRaf: false,
     });
-    return () => lenis.destroy();
+
+    let frame = 0;
+    let running = false;
+    let last = 0;
+    let clock = 0;
+    const tick = (now: number) => {
+      // A private clock with bounded steps, so the first frame after an idle gap does not jump the animation.
+      clock += Math.min(now - last, 34);
+      last = now;
+      lenis.raf(clock);
+      if (lenis.isScrolling) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        running = false;
+      }
+    };
+    const wake = () => {
+      if (running) return;
+      running = true;
+      last = performance.now();
+      frame = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('wheel', wake, { passive: true });
+    window.addEventListener('touchstart', wake, { passive: true });
+    window.addEventListener('keydown', wake);
+    document.addEventListener('click', wake, true);
+    wake();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('wheel', wake);
+      window.removeEventListener('touchstart', wake);
+      window.removeEventListener('keydown', wake);
+      document.removeEventListener('click', wake, true);
+      lenis.destroy();
+    };
   }, [reducedMotion, motionPaused]);
 
   // Section order follows the live landing: hero and stats, invest, why, how, trust, demo, FAQ, open, footer.
