@@ -1,141 +1,139 @@
-import { useState } from 'react';
-import imgVector20 from '../assets/fcaead313fe4a72535b991c71fc7bca7930932ad.svg';
-import imgVector21 from '../assets/e0aa74652f11e37baaecc060096fd1148cce88c9.svg';
-import imgVector63 from '../assets/7476de50d99289ae76d8adfa82c6b36fe0873abe.svg';
+import { useId, useState, type CSSProperties } from 'react';
+import { Plus } from 'lucide-react';
+import ScrollReveal from './ui/ScrollReveal';
 
 interface FaqItem {
-  id: number;
   question: string;
   answer: string;
 }
 
+// The first five are the live landing's FAQs; the last four cover account opening, TCS, withdrawals and fees.
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    question: 'Does my money actually leave India?',
+    answer:
+      "No, and that's the point. Your funds move through India's GIFT City financial hub and are held there with regulated custodians. No offshore transfer, no foreign bank account, full Indian oversight.",
+  },
+  {
+    question: 'What can I invest in?',
+    answer:
+      'Global stocks and ETFs across 90+ global markets, international mutual funds, global bonds, structured income notes and pre-IPO opportunities, all from one account.',
+  },
+  {
+    question: 'How much do I need to start?',
+    answer:
+      "Less than you'd think. Stocks are fractional from $1, fixed income starts at $1,000 and pre-IPO from $10,000, a fraction of traditional private-wealth minimums.",
+  },
+  {
+    question: 'What about tax and paperwork?',
+    answer:
+      "We do the heavy lifting. Your LRS usage, Schedule FA and capital-gains statements are generated for you, ready to hand to your CA. Investing abroad is under the RBI's Liberalised Remittance Scheme.",
+  },
+  {
+    question: 'Who is Valura.Ai?',
+    answer:
+      'Valura.Ai is a global-investment platform, recognised at GITEX Global and Money 20/20. Valura India IFSC Limited is an IFSCA-regulated broker-dealer at GIFT City. Voguestock brings it to you, backed by 30 years of trust with Indian investors.',
+  },
+  {
+    question: 'How do I open an account?',
+    answer:
+      'Tap Open an Account or download the Valura.Ai app, then complete the paperless KYC with your PAN and Aadhaar. Prefer to talk first? Leave your details below and a Voguestock specialist will call you.',
+  },
+  {
+    question: 'Is TCS charged when I add funds?',
+    answer:
+      "Resident Indians can invest up to $250,000 abroad each financial year under the RBI's Liberalised Remittance Scheme (LRS). Tax collected at source (TCS) can apply to these remittances, depending on the amount and the tax rules in force. TCS is not a final tax: it can be claimed against your income-tax liability when you file your return. Speak to your tax adviser about your own situation.",
+  },
+  {
+    question: 'How do withdrawals work?',
+    answer:
+      'Sell your holdings and request a withdrawal from your account. Money is paid out after the trade settles and the transfer is processed. Timelines and any charges are disclosed at onboarding.',
+  },
+  {
+    question: 'What are the fees?',
+    answer:
+      'Brokerage, currency conversion and any other charges are disclosed at onboarding, before you invest. Statutory charges and taxes apply.',
+  },
+];
+
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
+
 export default function Faq() {
-  const [openItem, setOpenItem] = useState<number | null>(0); // First item open by default
-
-  const faqItems: FaqItem[] = [
-    {
-      id: 0,
-      question: 'Is my money invested outside India legally?',
-      answer: 'Yes. Investments are facilitated through compliant channels under applicable RBI and FEMA guidelines.',
-    },
-    {
-      id: 1,
-      question: 'What can I invest in?',
-      answer: 'You can access global stocks, ETFs, mutual funds, bonds, structured products, and more.',
-    },
-    {
-      id: 2,
-      question: 'How much do I need to start?',
-      answer: 'You can begin your global investment journey with investments starting from $5,000.',
-    },
-    {
-      id: 3,
-      question: 'Is the onboarding process online?',
-      answer: 'Yes. Complete your application digitally with a simple and secure verification process.',
-    },
-    {
-      id: 4,
-      question: 'How do I track my investments?',
-      answer: 'Monitor your complete portfolio, performance, and holdings from a single dashboard.',
-    },
-  ];
-
-  const ctaBenefits = [
-    'Access Global Markets',
-    'Secure & Compliant Platform',
-    'Expert Investment Support',
-    'Unified Portfolio Dashboard',
-  ];
-
-  const handleToggle = (id: number) => {
-    setOpenItem(openItem === id ? null : id);
-  };
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const baseId = useId();
 
   return (
-    <section className="bg-white py-24 border-t border-gray-100" id="faq">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Title */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-display font-medium text-brand-dark leading-tight">
-            Frequently Asked Questions
-          </h2>
+    <section className="border-t border-gray-100 bg-white py-20 sm:py-24" id="faq">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-12 text-center sm:mb-16">
+          <p data-reveal className="eyebrow">
+            Good to know
+          </p>
+          <ScrollReveal
+            as="h2"
+            delay={80}
+            containerClassName="mt-4 font-display text-4xl leading-tight font-medium text-brand-dark sm:text-5xl"
+          >
+            Questions, answered simply.
+          </ScrollReveal>
         </div>
 
-        {/* FAQ Accordion List */}
-        <div className="space-y-6 font-sans">
-          {faqItems.map((item) => {
-            const isOpen = openItem === item.id;
+        <div className="font-sans">
+          {FAQ_ITEMS.map((item, index) => {
+            const isOpen = openIndex === index;
+            const buttonId = `${baseId}-question-${index}`;
+            const panelId = `${baseId}-answer-${index}`;
             return (
               <div
-                key={item.id}
-                className="border-b border-gray-200 pb-6 transition-all duration-300"
+                key={item.question}
+                data-reveal
+                style={revealDelay(Math.min(index, 4) * 60)}
+                className="border-b border-gray-200 py-5 sm:py-6"
               >
-                <button
-                  onClick={() => handleToggle(item.id)}
-                  className="w-full flex items-center justify-between text-left focus:outline-none group"
-                >
-                  <span className="text-xl sm:text-2xl font-bold text-brand-dark group-hover:text-brand-blue transition-colors duration-200">
-                    {item.question}
-                  </span>
-                  <div className="flex-shrink-0 ml-4">
-                    {isOpen ? (
-                      <img src={imgVector20} className="w-8 h-8 object-contain" alt="Close" />
-                    ) : (
-                      <img src={imgVector21} className="w-8 h-8 object-contain" alt="Open" />
-                    )}
-                  </div>
-                </button>
-
-                {/* Answer Content */}
+                <h3 className="font-sans">
+                  <button
+                    id={buttonId}
+                    type="button"
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    className="group flex w-full items-center justify-between gap-4 rounded-lg text-left"
+                  >
+                    <span className="text-lg font-bold text-brand-dark transition-colors duration-300 group-hover:text-brand-orange-strong sm:text-2xl">
+                      {item.question}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 transition-[rotate,background-color,border-color,color] duration-500 ${
+                        isOpen
+                          ? 'rotate-45 border-brand-orange bg-brand-orange text-brand-dark'
+                          : 'border-gray-300 text-gray-600 group-hover:border-brand-orange'
+                      }`}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </span>
+                  </button>
+                </h3>
                 <div
-                  className={`mt-4 overflow-hidden transition-all duration-300 ${
-                    isOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
-                  }`}
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
+                  inert={!isOpen}
+                  className={`grid transition-[grid-template-rows] duration-500 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                 >
-                  <p className="text-gray-500 text-base sm:text-lg leading-relaxed max-w-3xl">
-                    {item.answer}
-                  </p>
+                  <div className="overflow-hidden">
+                    <p
+                      className={`max-w-3xl pt-4 text-base leading-relaxed text-gray-600 transition-[opacity,translate] duration-500 sm:text-lg ${
+                        isOpen ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+                      }`}
+                    >
+                      {item.answer}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
-        <div className="bg-brand-light rounded-3xl p-8 sm:p-16 flex flex-col md:flex-row items-center justify-between gap-12 border border-gray-100 shadow-sm relative overflow-hidden">
-          {/* Subtle glow decoration */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-brand-orange/5 rounded-full blur-[80px] pointer-events-none" />
-
-          {/* Left Text */}
-          <div className="w-full md:w-1/2 font-sans relative z-10 text-left">
-            <span className="text-brand-orange font-bold text-sm tracking-wider uppercase mb-4 block">
-              Start Investing Today
-            </span>
-            <h4 className="text-3xl sm:text-4xl font-display font-medium text-brand-dark leading-tight mb-4">
-              Your Gateway to Global Markets Starts Here
-            </h4>
-            <p className="text-gray-500 text-base leading-relaxed mb-8">
-              Join thousands of investors accessing international opportunities through a secure, transparent, and easy-to-use investment platform.
-            </p>
-            <a
-              href="#open-account"
-              className="inline-block w-full sm:w-auto px-8 py-4 text-center rounded-xl bg-brand-orange font-bold text-white hover:bg-brand-orange/95 hover:shadow-lg transition-all duration-200"
-            >
-              Open Global Account
-            </a>
-          </div>
-
-          {/* Right Benefits List */}
-          <div className="w-full md:w-1/2 flex flex-col gap-4 font-sans relative z-10">
-            {ctaBenefits.map((benefit, index) => (
-              <div key={index} className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <img src={imgVector63} className="w-5 h-5 flex-shrink-0" alt="Check circle icon" />
-                <span className="text-brand-dark font-medium text-base">{benefit}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </section>

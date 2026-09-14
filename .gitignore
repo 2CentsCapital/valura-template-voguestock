@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Netlify CLI link state (points at personal sites; never commit)
+.netlify/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

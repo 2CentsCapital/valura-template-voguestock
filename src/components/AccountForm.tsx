@@ -1,320 +1,355 @@
-import React, { useState } from 'react';
-import imgMaskGroup from '../assets/de4732096a2b6da337dd0fde3afe717e1825dbda.svg';
-import { ArrowRight, Check, Loader2, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type FormEvent } from 'react';
+import { ArrowRight, Check, LoaderCircle } from 'lucide-react';
 import Velaris from './ui/velaris';
+import StoreButtons from './StoreButtons';
+import ScrollReveal from './ui/ScrollReveal';
+import {
+  CONTACT,
+  LEAD_FROM_NAME,
+  LEAD_SUBJECT,
+  SIGNUP_URL,
+  WEB3FORMS_ACCESS_KEY,
+  WEB3FORMS_ENDPOINT,
+} from '../config';
+
+type Field = 'fullName' | 'mobile' | 'email';
+type Status = 'idle' | 'sending' | 'success' | 'error';
 
 interface FormState {
   fullName: string;
   mobile: string;
   email: string;
-  role: string;
+  investorType: string;
+  botcheck: boolean;
 }
 
-interface FormErrors {
-  fullName?: string;
-  mobile?: string;
-  email?: string;
-  role?: string;
+type FormErrors = Partial<Record<Field, string>>;
+
+const INVESTOR_TYPES = ['Resident Indian', 'NRI', 'Foreign National'];
+const FIELD_ORDER: Field[] = ['fullName', 'mobile', 'email'];
+
+// The live landing's "Open an account" checklist.
+const BENEFITS = [
+  'Paperless KYC in minutes',
+  'Start from $1, buy in fractions',
+  'No foreign bank account needed',
+  'Tax & LRS reporting done for you',
+];
+
+const FORM_COLORS = ['#7a3510', '#a34d0e', '#1a120b', '#ef7e2e'];
+const INITIAL_FORM: FormState = { fullName: '', mobile: '', email: '', investorType: 'Resident Indian', botcheck: false };
+
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
+
+function validate(form: FormState): FormErrors {
+  const errors: FormErrors = {};
+  const name = form.fullName.trim();
+  if (!name) errors.fullName = 'Please enter your full name.';
+  else if (name.length < 2) errors.fullName = 'Please enter your full name as per PAN.';
+
+  const mobile = form.mobile.replace(/[\s()-]/g, '');
+  if (!mobile) errors.mobile = 'Please enter your mobile number.';
+  else if (!/^\+?\d{10,15}$/.test(mobile)) errors.mobile = 'Please enter a valid mobile number with 10 to 15 digits.';
+
+  const email = form.email.trim();
+  if (!email) errors.email = 'Please enter your email address.';
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errors.email = 'Please enter a valid email address.';
+  return errors;
 }
+
+const inputClass = (hasError: boolean) =>
+  `w-full rounded-xl border bg-white px-4 py-3.5 font-medium text-brand-dark placeholder:text-gray-500 transition-colors duration-300 focus:outline-none focus:ring-2 ${
+    hasError ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:border-brand-orange focus:ring-brand-orange/25'
+  }`;
 
 export default function AccountForm() {
-  const [form, setForm] = useState<FormState>({
-    fullName: '',
-    mobile: '',
-    email: '',
-    role: '',
-  });
-
+  const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const roles = [
-    'Individual Investor',
-    'NRI / OCI',
-    'Institution / Corporate',
-    'Registered Advisor / Wealth Manager',
-    'Other',
-  ];
-
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!form.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    } else if (form.fullName.trim().length < 3) {
-      newErrors.fullName = 'Please enter your full name as per Govt. ID';
-    }
-
-    if (!form.mobile.trim()) {
-      newErrors.mobile = 'Mobile number is required';
-    } else if (!/^\+?[0-9\s-]{8,15}$/.test(form.mobile.trim())) {
-      newErrors.mobile = 'Please enter a valid mobile number (e.g., +91 9999999999)';
-    }
-
-    if (!form.email.trim()) {
-      newErrors.email = 'Email address is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!form.role) {
-      newErrors.role = 'Please select who you are';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const [status, setStatus] = useState<Status>('idle');
+  const [submitError, setSubmitError] = useState('');
+  const successHeadingRef = useRef<HTMLHeadingElement>(null);
+  const fieldRefs = {
+    fullName: useRef<HTMLInputElement>(null),
+    mobile: useRef<HTMLInputElement>(null),
+    email: useRef<HTMLInputElement>(null),
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  useEffect(() => {
+    if (status === 'success') successHeadingRef.current?.focus();
+  }, [status]);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear validation error when typing
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    if (name in errors) setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (status === 'sending') return;
+
+    const found = validate(form);
+    setErrors(found);
+    const firstInvalid = FIELD_ORDER.find((field) => found[field]);
+    if (firstInvalid) {
+      fieldRefs[firstInvalid].current?.focus();
+      return;
+    }
+
+    setStatus('sending');
+    setSubmitError('');
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(WEB3FORMS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: LEAD_SUBJECT,
+          from_name: LEAD_FROM_NAME,
+          botcheck: form.botcheck,
+          'Full name': form.fullName.trim(),
+          Mobile: form.mobile.trim(),
+          Email: form.email.trim(),
+          'Investor type': form.investorType,
+        }),
+        signal: controller.signal,
+      });
+      const data = (await response.json().catch(() => null)) as { success?: boolean; message?: string } | null;
+      if (response.ok && data?.success) {
+        setStatus('success');
+      } else {
+        setStatus('error');
+        setSubmitError(data?.message || "Couldn't send right now. Please try again or WhatsApp us.");
+      }
+    } catch {
+      setStatus('error');
+      setSubmitError('Network error: please check your connection and try again.');
+    } finally {
+      window.clearTimeout(timeout);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setIsSubmitting(true);
-    // Simulate submission delay
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 1200);
-  };
-
-  const benefitItems = [
-    'Paperless KYC in minutes',
-    'Start from $5,000 — buy in fractions',
-    'No foreign bank account needed',
-    'Tax & LRS reporting done for you',
-  ];
+  const firstName = form.fullName.trim().split(/\s+/)[0];
 
   return (
-    <section className="bg-brand-dark py-24 relative overflow-hidden text-white font-sans" id="open-account">
-      {/* Animated Background like Footer */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <Velaris 
-          height="100%" 
-          className="w-full h-full opacity-70" 
-          bg="#141518" 
-          colors={["#3b82f6", "#2563eb", "#141518", "#f97316"]}
-          speed={3.5}
-          grain={0.15}
-        />
-      </div>
-      {/* Background Graphic Lines */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none z-0">
-        <img src={imgMaskGroup} className="w-full h-full object-cover" alt="" />
+    <section className="on-dark relative overflow-hidden bg-brand-night py-20 font-sans text-white sm:py-24" id="open">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <Velaris height="100%" className="h-full w-full opacity-70" bg="#1a120b" colors={FORM_COLORS} speed={3.5} grain={0.15} />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-          
-          {/* Left Column: Branding / Benefits Info */}
-          <div className="lg:col-span-6 flex flex-col justify-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-orange/10 border border-brand-orange/20 w-fit">
-              <Sparkles className="w-4 h-4 text-brand-orange" />
-              <span className="text-brand-orange text-xs font-semibold tracking-wider uppercase">
-                Open an account
-              </span>
-            </div>
-            
-            <h2 className="text-3xl sm:text-5xl font-display font-medium leading-tight text-white/95">
-              Fully digital, regulated in India, your money custodied in India.
-            </h2>
-            
-            <p className="text-gray-450 text-lg leading-relaxed max-w-xl">
-              Leave your details and a Voguestock specialist takes it from there.
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-20">
+          <div className="flex flex-col justify-center space-y-6 lg:col-span-6">
+            <p data-reveal className="eyebrow eyebrow-on-dark w-fit">
+              Open an account
             </p>
-
-            <ul className="space-y-4 pt-6 relative z-10">
-              {benefitItems.map((item, index) => (
-                <li key={index} className="flex items-center gap-3 relative z-10">
-                  <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-white font-medium text-base sm:text-lg">{item}</span>
+            <ScrollReveal
+              as="h2"
+              delay={80}
+              containerClassName="font-display text-3xl leading-tight font-medium text-white sm:text-5xl"
+            >
+              The Voguestock you trust, now with the world inside.
+            </ScrollReveal>
+            <p data-reveal style={revealDelay(160)} className="max-w-xl text-lg leading-relaxed text-gray-300">
+              Fully digital, regulated in India, your money custodied in India. Leave your details and a Voguestock
+              specialist takes it from there.
+            </p>
+            <ul className="space-y-4 pt-2">
+              {BENEFITS.map((item, index) => (
+                <li key={item} data-reveal style={revealDelay(220 + index * 70)} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15">
+                    <Check aria-hidden="true" className="h-4 w-4 text-white" />
+                  </span>
+                  <span className="text-base font-medium text-white sm:text-lg">{item}</span>
                 </li>
               ))}
             </ul>
+            <div data-reveal style={revealDelay(300)} className="pt-2">
+              <p className="mb-3 text-sm font-semibold text-gray-300">Or invest on the go</p>
+              <StoreButtons onDark />
+            </div>
           </div>
 
-          {/* Right Column: Lead Form Card */}
-          <div className="lg:col-span-6">
-            <div className="bg-white text-brand-dark rounded-3xl p-8 sm:p-10 shadow-2xl relative border border-gray-100 overflow-hidden min-h-[500px] flex flex-col justify-center animate-fadeIn">
-              
-              {!isSubmitted ? (
+          <div data-reveal="rise" style={revealDelay(120)} className="lg:col-span-6">
+            <div className="relative flex min-h-[500px] flex-col justify-center overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 text-brand-dark shadow-2xl sm:p-10">
+              {status === 'success' ? (
+                <div className="space-y-6 py-8 text-center" role="status" aria-live="polite">
+                  <div className="pop-in mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-brand-green/25 bg-brand-green/10 text-brand-green">
+                    <Check aria-hidden="true" className="h-8 w-8" strokeWidth={3} />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 ref={successHeadingRef} tabIndex={-1} className="font-display text-3xl font-medium text-brand-dark">
+                      Thanks, {firstName || 'investor'}!
+                    </h3>
+                    <p className="mx-auto max-w-sm leading-relaxed text-gray-600">
+                      Request received. A Voguestock specialist will call within one business day to complete your KYC.
+                    </p>
+                  </div>
+                  <a
+                    href={SIGNUP_URL}
+                    className="sheen group inline-flex items-center gap-2 rounded-xl bg-brand-orange px-6 py-3 font-bold text-brand-dark transition-colors duration-300 hover:bg-brand-orange-soft"
+                  >
+                    Continue to KYC
+                    <ArrowRight aria-hidden="true" className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </a>
+                </div>
+              ) : (
                 <>
-                  <h3 className="text-2xl font-display font-medium mb-8 text-brand-dark">
-                    Open your global account
-                  </h3>
+                  <h3 className="font-display text-2xl font-medium text-brand-dark">Open your global account</h3>
+                  <p className="mt-1 mb-7 text-sm text-gray-600">Two minutes. No overseas paperwork.</p>
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Full Name */}
+                  <form onSubmit={handleSubmit} noValidate aria-busy={status === 'sending'} className="relative space-y-5">
+                    {/* Honeypot: hidden from people, filled in by bots */}
+                    <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                      <label htmlFor="lead-botcheck">Leave this box unchecked</label>
+                      <input
+                        id="lead-botcheck"
+                        type="checkbox"
+                        name="botcheck"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        checked={form.botcheck}
+                        onChange={(event) => setForm((prev) => ({ ...prev, botcheck: event.target.checked }))}
+                      />
+                    </div>
+
                     <div className="space-y-2">
-                      <label htmlFor="fullName" className="block text-sm font-semibold text-brand-dark">
+                      <label htmlFor="lead-fullName" className="block text-sm font-semibold text-brand-dark">
                         Full name
                       </label>
                       <input
-                        type="text"
+                        ref={fieldRefs.fullName}
+                        id="lead-fullName"
                         name="fullName"
-                        id="fullName"
+                        type="text"
+                        autoComplete="name"
                         value={form.fullName}
                         onChange={handleChange}
-                        placeholder="As per Govt. ID"
-                        className={`w-full px-4 py-3.5 rounded-xl border bg-white text-brand-dark font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 transition duration-200 ${
-                          errors.fullName
-                            ? 'border-red-500 focus:ring-red-100'
-                            : 'border-gray-200 focus:ring-brand-blue/20 focus:border-brand-blue'
-                        }`}
+                        placeholder="As per PAN"
+                        aria-invalid={errors.fullName ? true : undefined}
+                        aria-describedby={errors.fullName ? 'lead-fullName-error' : undefined}
+                        className={inputClass(Boolean(errors.fullName))}
                       />
                       {errors.fullName && (
-                        <p className="text-xs font-semibold text-red-500">{errors.fullName}</p>
+                        <p id="lead-fullName-error" className="text-sm font-semibold text-red-700">
+                          {errors.fullName}
+                        </p>
                       )}
                     </div>
 
-                    {/* Mobile */}
                     <div className="space-y-2">
-                      <label htmlFor="mobile" className="block text-sm font-semibold text-brand-dark">
+                      <label htmlFor="lead-mobile" className="block text-sm font-semibold text-brand-dark">
                         Mobile
                       </label>
                       <input
-                        type="text"
+                        ref={fieldRefs.mobile}
+                        id="lead-mobile"
                         name="mobile"
-                        id="mobile"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
                         value={form.mobile}
                         onChange={handleChange}
                         placeholder="+91"
-                        className={`w-full px-4 py-3.5 rounded-xl border bg-white text-brand-dark font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 transition duration-200 ${
-                          errors.mobile
-                            ? 'border-red-500 focus:ring-red-100'
-                            : 'border-gray-200 focus:ring-brand-blue/20 focus:border-brand-blue'
-                        }`}
+                        aria-invalid={errors.mobile ? true : undefined}
+                        aria-describedby={errors.mobile ? 'lead-mobile-error' : undefined}
+                        className={inputClass(Boolean(errors.mobile))}
                       />
                       {errors.mobile && (
-                        <p className="text-xs font-semibold text-red-500">{errors.mobile}</p>
+                        <p id="lead-mobile-error" className="text-sm font-semibold text-red-700">
+                          {errors.mobile}
+                        </p>
                       )}
                     </div>
 
-                    {/* Email */}
                     <div className="space-y-2">
-                      <label htmlFor="email" className="block text-sm font-semibold text-brand-dark">
+                      <label htmlFor="lead-email" className="block text-sm font-semibold text-brand-dark">
                         Email
                       </label>
                       <input
-                        type="email"
+                        ref={fieldRefs.email}
+                        id="lead-email"
                         name="email"
-                        id="email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
                         value={form.email}
                         onChange={handleChange}
                         placeholder="you@email.com"
-                        className={`w-full px-4 py-3.5 rounded-xl border bg-white text-brand-dark font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 transition duration-200 ${
-                          errors.email
-                            ? 'border-red-500 focus:ring-red-100'
-                            : 'border-gray-200 focus:ring-brand-blue/20 focus:border-brand-blue'
-                        }`}
+                        aria-invalid={errors.email ? true : undefined}
+                        aria-describedby={errors.email ? 'lead-email-error' : undefined}
+                        className={inputClass(Boolean(errors.email))}
                       />
                       {errors.email && (
-                        <p className="text-xs font-semibold text-red-500">{errors.email}</p>
+                        <p id="lead-email-error" className="text-sm font-semibold text-red-700">
+                          {errors.email}
+                        </p>
                       )}
                     </div>
 
-                    {/* I am a */}
                     <div className="space-y-2">
-                      <label htmlFor="role" className="block text-sm font-semibold text-brand-dark">
+                      <label htmlFor="lead-investorType" className="block text-sm font-semibold text-brand-dark">
                         I am a
                       </label>
                       <div className="relative">
                         <select
-                          name="role"
-                          id="role"
-                          value={form.role}
+                          id="lead-investorType"
+                          name="investorType"
+                          value={form.investorType}
                           onChange={handleChange}
-                          className={`w-full px-4 py-3.5 rounded-xl border bg-white text-brand-dark font-medium focus:outline-none focus:ring-2 transition duration-200 appearance-none pr-10 ${
-                            errors.role
-                              ? 'border-red-500 focus:ring-red-100'
-                              : 'border-gray-200 focus:ring-brand-blue/20 focus:border-brand-blue'
-                          } ${!form.role ? 'text-gray-400' : 'text-brand-dark'}`}
+                          className={`${inputClass(false)} appearance-none pr-10`}
                         >
-                          <option value="" disabled hidden>
-                            Select one...
-                          </option>
-                          {roles.map((r, idx) => (
-                            <option key={idx} value={r} className="text-brand-dark">
-                              {r}
+                          {INVESTOR_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
                             </option>
                           ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500">
-                          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-600">
+                          <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
                             <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                           </svg>
-                        </div>
+                        </span>
                       </div>
-                      {errors.role && (
-                        <p className="text-xs font-semibold text-red-500">{errors.role}</p>
-                      )}
                     </div>
 
-                    {/* Button */}
+                    {status === 'error' && (
+                      <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                        <p>{submitError}</p>
+                        <a href={CONTACT.whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block underline">
+                          {CONTACT.whatsappDisplay}
+                        </a>
+                      </div>
+                    )}
+
                     <button
                       type="submit"
-                      disabled={isSubmitting}
-                      className="w-full mt-4 bg-brand-orange text-white font-bold py-4 px-6 rounded-xl hover:bg-brand-orange/95 hover:shadow-xl hover:shadow-brand-orange/20 transition-all duration-200 flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-85 disabled:cursor-not-allowed"
+                      disabled={status === 'sending'}
+                      className="sheen group mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-orange px-6 py-4 font-bold text-brand-dark transition-colors duration-300 hover:bg-brand-orange-soft disabled:cursor-not-allowed disabled:opacity-80"
                     >
-                      {isSubmitting ? (
+                      {status === 'sending' ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Submitting...</span>
+                          <LoaderCircle aria-hidden="true" className="h-5 w-5 animate-spin" />
+                          <span>Sending…</span>
                         </>
                       ) : (
                         <>
                           <span>Contact us</span>
-                          <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" />
+                          <ArrowRight aria-hidden="true" className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                         </>
                       )}
                     </button>
                   </form>
 
-                  {/* Footnote */}
-                  <p className="text-[11px] leading-relaxed text-gray-450 text-center mt-6">
+                  <p className="mt-6 text-center text-xs leading-relaxed text-gray-600">
                     By continuing you agree to be contacted by Voguestock. Investments are subject to market risks.
                   </p>
                 </>
-              ) : (
-                /* Success Screen */
-                <div className="text-center py-8 space-y-6 animate-fadeIn">
-                  <div className="w-16 h-16 bg-brand-green/10 border border-brand-green/20 rounded-full flex items-center justify-center mx-auto text-brand-green">
-                    <Check className="w-8 h-8 stroke-[3]" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-3xl font-display font-medium text-brand-dark">
-                      Application Received!
-                    </h3>
-                    <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">
-                      Thank you for your interest. A Voguestock specialist will review your details and reach out to you shortly.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setForm({ fullName: '', mobile: '', email: '', role: '' });
-                      setIsSubmitted(false);
-                    }}
-                    className="px-6 py-2.5 rounded-xl border border-gray-200 font-bold text-sm text-brand-dark hover:bg-gray-50 transition duration-200 cursor-pointer"
-                  >
-                    Submit Another Inquiry
-                  </button>
-                </div>
               )}
-
             </div>
           </div>
-
         </div>
       </div>
     </section>

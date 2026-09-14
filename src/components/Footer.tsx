@@ -1,153 +1,100 @@
-import imgVogueLogo from '../assets/vogue-logo 1.svg';
+import type { CSSProperties } from 'react';
+import jointLogoWhite from '../assets/brand/joint-logo-white.webp';
+import wordmark from '../assets/brand/voguestock-wordmark.svg';
 import Velaris from './ui/velaris';
+import StoreButtons from './StoreButtons';
+import MotionToggle from './MotionToggle';
+import { CONTACT, RISK_LINE, SIGNUP_URL, VOGUESTOCK_LEGAL_LINKS } from '../config';
+
+// The live landing's footer "Explore" list.
+const EXPLORE_LINKS = [
+  { label: 'What you can hold', href: '#invest' },
+  { label: 'Why', href: '#why' },
+  { label: 'How it works', href: '#how' },
+  { label: 'FAQ', href: '#faq' },
+  { label: 'Open an account', href: SIGNUP_URL },
+];
+
+const FOOTER_COLORS = ['#6b2f0d', '#8f430c', '#1a120b', '#d9661a'];
+const linkClass = 'text-gray-300 transition-colors duration-300 hover:text-white';
+
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
 
 export default function Footer() {
-  const companyLinks = [
-    { label: 'About', href: '#' },
-    { label: 'Careers', href: '#' },
-    { label: 'Partners', href: '#' },
-    { label: 'Newsroom', href: '#' },
-    { label: 'Contact', href: '#' },
-  ];
-
-  const investmentLinks = [
-    { label: 'Global Stocks', href: '#' },
-    { label: 'ETFs', href: '#' },
-    { label: 'Mutual Funds', href: '#' },
-    { label: 'Bonds', href: '#' },
-    { label: 'Structured Products', href: '#' },
-  ];
-
-  const resourceLinks = [
-    { label: 'Help Center', href: '#' },
-    { label: 'Blog', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'FAQs', href: '#' },
-  ];
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="relative bg-brand-dark text-white pt-24 pb-8 overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <Velaris 
-          height="100%" 
-          className="w-full h-full opacity-70" 
-          bg="#0f172a" 
-          colors={["#3b82f6", "#2563eb", "#0f172a", "#f97316"]}
-          speed={3.5}
-          grain={0.15}
-        />
+    <footer className="on-dark relative overflow-hidden border-t border-white/10 bg-brand-night pt-20 pb-8 text-white sm:pt-24">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <Velaris height="100%" className="h-full w-full opacity-60" bg="#1a120b" colors={FOOTER_COLORS} speed={3.5} grain={0.15} />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-white/15">
-          {/* Left panel: Newsletter signup & Social links */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-10">
-            <div className="font-sans max-w-md">
-              <h3 className="text-3xl sm:text-4xl font-display font-medium mb-4">
-                Stay Updated with Global Market Insights
-              </h3>
-              <p className="text-gray-400 text-base leading-relaxed mb-6">
-                Receive investment news, market trends, and expert insights directly in your inbox.
-              </p>
-
-              {/* Form Input */}
-              <form onSubmit={(e) => e.preventDefault()} className="relative w-full max-w-sm flex items-center">
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="w-full bg-white text-brand-dark px-6 py-4 rounded-full text-sm font-medium border-0 focus:outline-none pr-32 placeholder-gray-400"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-1 top-1 bottom-1 px-4 bg-brand-dark text-white rounded-full font-bold text-sm hover:bg-brand-blue hover:shadow-lg transition-all duration-200"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </div>
-
-            {/* Social Links */}
-            <div>
-              <span className="heading-jost text-xl font-semibold tracking-wide block mb-4 uppercase">
-                Follow us on
-              </span>
-              <div className="flex flex-wrap items-center gap-6 text-gray-400 font-sans text-sm">
-                {/* Facebook */}
-                <a href="#facebook" className="group flex items-center gap-2 hover:text-white transition duration-200">
-                  <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                  </svg>
-                  <span className="sr-only">Facebook</span>
-                </a>
-
-                {/* Instagram */}
-                <a href="#instagram" className="group flex items-center gap-2 hover:text-white transition duration-200">
-                  <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                  </svg>
-                  <span className="sr-only">Instagram</span>
-                </a>
-
-                {/* Twitter / X */}
-                <a href="#twitter" className="group flex items-center gap-2 hover:text-white transition duration-200">
-                  <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                  <span className="sr-only">Twitter</span>
-                </a>
-
-                {/* LinkedIn */}
-                <a href="#linkedin" className="group flex items-center gap-2 hover:text-white transition duration-200">
-                  <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                  <span className="sr-only">LinkedIn</span>
-                </a>
-              </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 font-sans sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 border-b border-white/15 pb-12 lg:grid-cols-12">
+          <div data-reveal className="lg:col-span-5">
+            <img
+              src={jointLogoWhite}
+              alt="Voguestock powered by Valura.Ai"
+              width={392}
+              height={96}
+              loading="lazy"
+              decoding="async"
+              className="h-12 w-auto"
+            />
+            <p className="mt-6 max-w-md text-base leading-relaxed text-gray-300">
+              Global investing for India: Voguestock&apos;s thirty-year track record, powered by Valura.Ai&apos;s
+              IFSCA-regulated GIFT City platform. Your money, the world&apos;s markets, one simple place.
+            </p>
+            <div className="mt-8">
+              <p className="mb-3 text-sm font-semibold text-gray-300">Get the app</p>
+              <StoreButtons onDark />
             </div>
           </div>
 
-          {/* Right panel: Categorized links */}
-          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8 text-base font-sans">
-            {/* Company */}
-            <div>
-              <span className="font-display font-medium text-lg text-white block mb-6">Company</span>
-              <ul className="space-y-4">
-                {companyLinks.map((link) => (
+          <div className="grid grid-cols-1 gap-10 text-base sm:grid-cols-3 lg:col-span-7">
+            <nav data-reveal style={revealDelay(90)} aria-label="Footer">
+              <h2 className="mb-5 font-display text-lg font-medium text-white">Explore</h2>
+              <ul className="space-y-3">
+                {EXPLORE_LINKS.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-gray-400 hover:text-white transition duration-200">
+                    <a href={link.href} className={linkClass}>
                       {link.label}
                     </a>
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
 
-            {/* Investments */}
-            <div>
-              <span className="font-display font-medium text-lg text-white block mb-6">Investments</span>
-              <ul className="space-y-4">
-                {investmentLinks.map((link) => (
-                  <li key={link.label}>
-                    <a href={link.href} className="text-gray-400 hover:text-white transition duration-200">
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
+            <div data-reveal style={revealDelay(180)}>
+              <h2 className="mb-5 font-display text-lg font-medium text-white">Contact</h2>
+              <ul className="space-y-3">
+                <li>
+                  <a href={CONTACT.phoneHref} className={linkClass}>
+                    {CONTACT.phoneDisplay}
+                  </a>
+                </li>
+                <li>
+                  <a href={CONTACT.whatsappHref} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    {CONTACT.whatsappDisplay}
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${CONTACT.email}`} className={`${linkClass} break-all`}>
+                    {CONTACT.email}
+                  </a>
+                </li>
+                <li>
+                  <address className="text-gray-300 not-italic">{CONTACT.address}</address>
+                </li>
               </ul>
             </div>
 
-            {/* Resources */}
-            <div>
-              <span className="font-display font-medium text-lg text-white block mb-6">Resources</span>
-              <ul className="space-y-4">
-                {resourceLinks.map((link) => (
+            <div data-reveal style={revealDelay(270)}>
+              <h2 className="mb-5 font-display text-lg font-medium text-white">Voguestock policies</h2>
+              <ul className="space-y-3">
+                {VOGUESTOCK_LEGAL_LINKS.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-gray-400 hover:text-white transition duration-200">
+                    <a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
                       {link.label}
                     </a>
                   </li>
@@ -157,15 +104,44 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom copyright */}
-        <div className="pt-8 text-center text-gray-500 font-sans text-sm">
-          <p>© 2026. All rights reserved.</p>
+        <div
+          data-reveal="fade"
+          className="grid grid-cols-1 gap-6 border-b border-white/15 py-8 text-sm leading-relaxed text-gray-300 md:grid-cols-2"
+        >
+          <p>
+            <strong className="font-semibold text-white">Voguestock:</strong> Vogue Commercial Co. Ltd. · SEBI Reg.
+            INZ000277536 (NSE, BSE) · NSDL IN-DP-119-2015 · MF ARN 166877 · IRDAI CA0190.
+          </p>
+          <p>
+            <strong className="font-semibold text-white">Valura.Ai:</strong> Valura India IFSC Limited, an IFSCA-regulated
+            broker-dealer at GIFT City · GIFT SEZ, GIFT City, Gandhinagar, Gujarat 382355, India · assets custodied in
+            GIFT City, India.
+          </p>
+        </div>
+
+        <div data-reveal="fade" className="space-y-3 py-8 text-xs leading-relaxed text-gray-400 sm:text-[13px]">
+          <p className="text-sm font-semibold text-white">{RISK_LINE}</p>
+          <p>
+            Global investing carries additional currency, country and regulatory risks. Structured products carry the
+            credit risk of the issuing bank. Coupon and return figures are indicative and not guaranteed. Overseas
+            investments are made under the RBI Liberalised Remittance Scheme (LRS), subject to limits and tax. Voguestock
+            powered by Valura.Ai is a distribution partnership; this page is informational and not investment advice.
+            Brokerage and statutory charges apply.
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center gap-4 border-t border-white/15 pt-6 text-sm text-gray-400 sm:flex-row sm:justify-between">
+          <p className="text-center sm:text-left">© {year} Vogue Commercial Co. Ltd., in partnership with Valura.Ai.</p>
+          <MotionToggle />
         </div>
       </div>
 
-      {/* Huge Watermark Graphic — fully visible below copyright */}
-      <div className="w-full flex justify-center select-none pointer-events-none mt-12 px-4 mb-[-40px] relative z-10">
-        <img src={imgVogueLogo} className="w-full max-w-[1800px] h-auto" alt="Voguestock Watermark" />
+      <div
+        aria-hidden="true"
+        data-reveal="rise"
+        className="pointer-events-none relative z-10 mt-12 mb-[-40px] flex w-full justify-center px-4 select-none"
+      >
+        <img src={wordmark} alt="" width={1713} height={181} loading="lazy" decoding="async" className="h-auto w-full max-w-[1800px]" />
       </div>
     </footer>
   );

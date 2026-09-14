@@ -1,149 +1,162 @@
-import imgIfscaLogo21 from '../assets/bf58fade2d0f655487506695245c57d0b250b66f.png';
-import imgNsdl11 from '../assets/0254c07aa37e753054b1f9e2d5ecb58c49c0e4d6.png';
-import imgImage775 from '../assets/89c9f80eade451c273cc982915894a67d24a3722.png';
-import imgG1 from '../assets/893e962417dd61a3aae2dd868d7a6557d3b8b11e.svg';
+import { useLayoutEffect, useRef, type CSSProperties } from 'react';
+import { Archive, Award, BadgeCheck, Building2, Globe } from 'lucide-react';
+import ScrollReveal from './ui/ScrollReveal';
+import { useLoopZone, useMotionPaused } from '../lib/motion';
+
+// The live landing's "Regulation & registrations" card.
+const REGISTRATIONS = [
+  { icon: BadgeCheck, label: 'Voguestock: SEBI (NSE, BSE)', value: 'INZ000277536' },
+  { icon: Archive, label: 'NSDL Depository', value: 'IN-DP-119-2015' },
+  { icon: Globe, label: 'Valura.Ai: platform', value: 'IFSCA / GIFT City' },
+  { icon: Building2, label: 'Custody', value: 'GIFT City, India' },
+  { icon: Award, label: 'Recognition', value: 'GITEX · Money 20/20' },
+];
+
+// Highlights strip: every line repeats a registration from the live landing or a canonical Valura.Ai fact.
+const HIGHLIGHTS = [
+  'Voguestock: SEBI-registered stock broker (NSE, BSE)',
+  'Voguestock: NSDL depository participant',
+  'Valura.Ai: IFSCA-regulated broker-dealer at GIFT City',
+  'Funded in rupees under the RBI Liberalised Remittance Scheme',
+  '90+ global markets',
+  '100,000+ instruments',
+  'Fractional investing from $1',
+];
+
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
 
 export default function TrustSection() {
-  const desktopPartners = [
-    {
-      img: imgG1,
-      label: 'SEBI Registered',
-      alt: 'SEBI logo',
-      imgClass: 'w-[138px] h-[131px] object-contain',
-      wrapClass: 'items-start',
-    },
-    {
-      img: imgIfscaLogo21,
-      label: 'IFSCA Compliant',
-      alt: 'IFSCA logo',
-      imgClass: 'w-[215px] h-[210px] object-contain',
-      wrapClass: 'items-center',
-    },
-    {
-      img: imgNsdl11,
-      label: 'NSDL Participant',
-      alt: 'NSDL logo',
-      imgClass: 'w-[123px] h-[134px] object-contain',
-      wrapClass: 'items-center',
-    },
-    {
-      img: imgImage775,
-      label: 'GIFT City, India',
-      alt: 'GIFT City logo',
-      imgClass: 'w-[181px] h-[129px] object-contain',
-      wrapClass: 'items-center',
-    },
-  ];
+  const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLUListElement>(null);
+  const loops = useLoopZone(sectionRef);
+  const motionPaused = useMotionPaused();
+  // The still layout applies while animations are paused, or when the inline script in index.html did not run.
+  const still = motionPaused || !document.documentElement.classList.contains('js');
 
-  const mobilePartners = [
-    {
-      img: imgG1,
-      label: 'SEBI Registered',
-      alt: 'SEBI logo',
-      imgClass: 'w-[100px] h-[95px] object-contain',
-      wrapClass: 'items-start',
-    },
-    {
-      img: imgIfscaLogo21,
-      label: 'IFSCA Compliant',
-      alt: 'IFSCA logo',
-      imgClass: 'w-[110px] h-[107px] object-contain',
-      wrapClass: 'items-center',
-    },
-    {
-      img: imgNsdl11,
-      label: 'NSDL Participant',
-      alt: 'NSDL logo',
-      imgClass: 'w-[90px] h-[98px] object-contain',
-      wrapClass: 'items-center',
-    },
-    {
-      img: imgImage775,
-      label: 'GIFT City, India',
-      alt: 'GIFT City logo',
-      imgClass: 'w-[120px] h-[85px] object-contain',
-      wrapClass: 'items-center',
-    },
-  ];
+  // In the still layout the highlights sit in centred wrapped rows (index.css). Row breaks depend on the width and the
+  // font, so mark the first item of each row; separators then appear only between items on one row.
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const items = Array.from(track.querySelectorAll<HTMLElement>('.marquee-item:not(.marquee-copy)'));
+    const clear = () => {
+      track.removeAttribute('data-rows-ready');
+      items.forEach((item) => item.removeAttribute('data-row-start'));
+    };
+    if (!still) {
+      clear();
+      return;
+    }
+
+    let active = true;
+    const markRows = () => {
+      if (!active) return;
+      let previousTop: number | null = null;
+      for (const item of items) {
+        const top = item.getBoundingClientRect().top;
+        item.toggleAttribute('data-row-start', previousTop === null || Math.abs(top - previousTop) > 2);
+        previousTop = top;
+      }
+      track.setAttribute('data-rows-ready', '');
+    };
+    markRows();
+    const observer = new ResizeObserver(markRows);
+    observer.observe(track);
+    document.fonts.ready.then(markRows);
+    return () => {
+      active = false;
+      observer.disconnect();
+      clear();
+    };
+  }, [still]);
 
   return (
-    <section className="bg-white border-t border-b border-gray-100 py-20 overflow-hidden" id="trust-badges">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-        {/* Heading */}
-        <h2 className="text-4xl sm:text-5xl font-display font-medium text-brand-dark text-center leading-tight mb-16">
-          Backed by entities already trusted
-        </h2>
+    <section
+      ref={sectionRef}
+      data-loops={loops}
+      className="overflow-hidden border-y border-gray-100 bg-white pt-20 sm:pt-24"
+      id="trust"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p data-reveal className="eyebrow">
+            Trust, in specifics
+          </p>
+          <ScrollReveal
+            as="h2"
+            delay={80}
+            containerClassName="mt-4 font-display text-4xl leading-tight font-medium text-brand-dark sm:text-5xl"
+          >
+            Backed by a name India already trusts.
+          </ScrollReveal>
+        </div>
 
-        {/* Desktop View: Static row of logos */}
-        <div className="hidden sm:flex flex-row items-center justify-around gap-6">
-          {desktopPartners.map((partner) => (
-            <div
-              key={partner.label}
-              className={`flex flex-col gap-5 ${partner.wrapClass}`}
-            >
-              <div className="flex items-center justify-center h-[135px]">
-                <img
-                  src={partner.img}
-                  alt={partner.alt}
-                  className={`${partner.imgClass} transition-transform duration-300 hover:scale-105`}
-                />
-              </div>
-              <p className="font-sans font-extrabold text-[#516259] text-base text-center">
-                {partner.label}
-              </p>
-            </div>
-          ))}
+        <div className="mt-12 grid grid-cols-1 items-center gap-10 sm:mt-16 lg:grid-cols-12 lg:gap-14">
+          <div className="space-y-5 font-sans text-base leading-relaxed text-gray-600 sm:text-lg lg:col-span-6">
+            <p data-reveal>
+              For three decades, Voguestock has been a <strong className="font-semibold text-brand-dark">SEBI-registered broker</strong> on
+              the NSE and BSE and an NSDL depository participant. It&apos;s led by{' '}
+              <strong className="font-semibold text-brand-dark">Gopal Krishna Agarwal</strong>, a chartered accountant, former{' '}
+              <strong className="font-semibold text-brand-dark">National President of ANMI</strong> and independent director of{' '}
+              <strong className="font-semibold text-brand-dark">BPCL</strong>, alongside{' '}
+              <strong className="font-semibold text-brand-dark">B. S. Bisht</strong>, former Executive Director (Finance) of{' '}
+              <strong className="font-semibold text-brand-dark">Power Finance Corporation</strong>.
+            </p>
+            <p data-reveal style={revealDelay(100)}>
+              Your global assets are held in <strong className="font-semibold text-brand-dark">GIFT City, inside India</strong>, on
+              Valura.Ai&apos;s IFSCA-regulated platform: segregated, never on anyone&apos;s balance sheet. Your money never leaves
+              the country, and your LRS &amp; Schedule FA reports are prepared for you.
+            </p>
+          </div>
+
+          <div
+            data-reveal
+            style={revealDelay(120)}
+            className="rounded-3xl border border-gray-100 bg-brand-light p-6 font-sans shadow-sm sm:p-8 lg:col-span-6"
+          >
+            <h3 className="font-display text-xl font-medium text-brand-dark sm:text-2xl">Regulation &amp; registrations</h3>
+            <dl className="mt-4 divide-y divide-gray-200">
+              {REGISTRATIONS.map(({ icon: Icon, label, value }, index) => (
+                <div
+                  key={label}
+                  data-reveal="fade"
+                  style={revealDelay(220 + index * 70)}
+                  className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                >
+                  <dt className="flex items-center gap-3 text-sm text-gray-600 sm:text-base">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-brand-orange-strong shadow-sm">
+                      <Icon aria-hidden="true" className="h-5 w-5" />
+                    </span>
+                    {label}
+                  </dt>
+                  <dd className="pl-12 text-base font-bold text-brand-dark sm:pl-0 sm:text-right">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
       </div>
 
-      {/* Mobile View: Logos Marquee Wrapper - Full Width */}
-      <div className="relative w-full overflow-hidden sm:hidden">
-        {/* Linear gradient fade overlays on sides for smooth blending */}
-        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-
-        <div className="flex w-max gap-24 animate-marquee-x py-4">
-          {/* First Set */}
-          <div className="flex gap-24 items-center flex-shrink-0">
-            {mobilePartners.map((partner, index) => (
-              <div
-                key={`${partner.label}-${index}`}
-                className={`flex flex-col gap-5 ${partner.wrapClass}`}
-              >
-                <div className="flex items-center justify-center h-[100px]">
-                  <img
-                    src={partner.img}
-                    alt={partner.alt}
-                    className={`${partner.imgClass} transition-transform duration-300 hover:scale-105`}
-                  />
-                </div>
-                <p className="font-sans font-extrabold text-[#516259] text-base text-center whitespace-nowrap">
-                  {partner.label}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Second Duplicate Set for Seamless Looping */}
-          <div className="flex gap-24 items-center flex-shrink-0">
-            {mobilePartners.map((partner, index) => (
-              <div
-                key={`${partner.label}-${index}-dup`}
-                className={`flex flex-col gap-5 ${partner.wrapClass}`}
-              >
-                <div className="flex items-center justify-center h-[100px]">
-                  <img
-                    src={partner.img}
-                    alt={partner.alt}
-                    className={`${partner.imgClass} transition-transform duration-300 hover:scale-105`}
-                  />
-                </div>
-                <p className="font-sans font-extrabold text-[#516259] text-base text-center whitespace-nowrap">
-                  {partner.label}
-                </p>
-              </div>
-            ))}
-          </div>
+      {/* Slow highlights marquee: pauses on hover and off screen; while animations are paused it becomes still rows */}
+      <div data-reveal="fade" className="mt-16 border-t border-gray-100 bg-brand-light py-5 sm:mt-20">
+        <div className="marquee">
+          <ul ref={trackRef} aria-label="Highlights" className="marquee-track loop">
+            {[...HIGHLIGHTS, ...HIGHLIGHTS].map((item, index) => {
+              const copy = index >= HIGHLIGHTS.length;
+              return (
+                <li
+                  key={`${item}-${index}`}
+                  aria-hidden={copy ? true : undefined}
+                  className={`marquee-item flex items-center gap-3 px-6 font-sans text-sm font-semibold whitespace-nowrap text-gray-700${
+                    copy ? ' marquee-copy' : ''
+                  }`}
+                >
+                  <span aria-hidden="true" className="marquee-dot h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-orange" />
+                  {item}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
     </section>

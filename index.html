@@ -2,11 +2,69 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>new-folder--3-</title>
+    <script>
+      // Before first paint: enable entrance reveals and apply a stored "Pause animations" choice.
+      (function () {
+        var root = document.documentElement;
+        root.classList.add('js');
+        try {
+          if (window.localStorage.getItem('voguestock-motion-paused') === '1') root.classList.add('motion-paused');
+        } catch (e) {}
+      })();
+    </script>
+    <title>Voguestock powered by Valura.Ai: Global Investing from India</title>
+    <meta
+      name="description"
+      content="Voguestock powered by Valura.Ai: invest in global stocks, ETFs, bonds, structured income notes and pre-IPO, from India. Regulated, custodied in GIFT City."
+    />
+    <meta name="theme-color" content="#EF7E2E" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Voguestock powered by Valura.Ai" />
+    <meta property="og:title" content="Voguestock powered by Valura.Ai: Global Investing from India" />
+    <meta
+      property="og:description"
+      content="Invest in global stocks, ETFs, bonds, structured income notes and pre-IPO, from India, with Voguestock powered by Valura.Ai."
+    />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Voguestock powered by Valura.Ai: invest in the whole world, without leaving India." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Voguestock powered by Valura.Ai: Global Investing from India" />
+    <meta
+      name="twitter:description"
+      content="Invest in global stocks, ETFs, bonds, structured income notes and pre-IPO, from India, with Voguestock powered by Valura.Ai."
+    />
+    <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.jpg" />
+
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@400,500,600,700&amp;display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" />
   </head>
   <body>
+    <noscript>
+      <div style="max-width: 640px; margin: 64px auto; padding: 0 24px; font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #241609">
+        <p style="margin: 0; font-weight: 700; color: #a34d0e">Voguestock powered by Valura.Ai</p>
+        <h1 style="margin: 12px 0 16px; font-size: 34px; line-height: 1.15">Invest in the whole world, without leaving India.</h1>
+        <p style="margin: 0 0 16px">
+          This page needs JavaScript to show its content. You can still open an account at
+          <a href="https://voguestock-app.valura.ai/auth?mode=signup" style="color: #a34d0e">voguestock-app.valura.ai</a>
+          or write to Voguestock at <a href="mailto:Support@voguestock.in" style="color: #a34d0e">Support@voguestock.in</a>.
+        </p>
+        <p style="margin: 0; font-size: 13px; color: #57534e">
+          Investments in securities markets are subject to market risks. Read all related documents carefully before investing.
+        </p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
