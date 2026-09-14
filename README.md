@@ -57,8 +57,11 @@ Every outbound URL, contact detail and lead-form setting lives in `src/config.ts
 - The UAE licence wording and "dual-regulated" replaced with the India descriptor for Valura India IFSC Limited.
 - The disclaimer sentence about protected structures removed; the standard risk line is shown above the footer disclaimer.
 - Brand written as "Valura.Ai" and the pairing as "Voguestock powered by Valura.Ai"; no dashes of the em or en kind anywhere.
-- Mock dashboards and the demo video carry "Illustrative only. Not investment advice." The stock-deal recommendation
-  card, which showed an upside percentage, is blurred in the dashboard images and in the video.
+- Product screens are marked "Illustrative only. Not investment advice." and show no personal data. The demo account's
+  name and profile photos, its portfolio value, day change, allocation and cash balances, and the stock-deal
+  recommendation card (which showed an upside percentage) are blurred in the dashboard images, the laptop mock and the
+  video. The recording's closing positions and portfolio screens, which list holdings and P&L, are cut. Legible news
+  headlines that name a real person and a company CEO's name are blurred as well.
 
 ## Run locally
 
@@ -94,9 +97,9 @@ On Coolify, use the Dockerfile build pack and expose port 80.
 
 ## Media
 
-Images are WebP, sized for at most twice their rendered size. The template's 5.7 MB animated WebP is replaced by a still,
-and the demo video is re-encoded to 720p VP9 (WebM) and H.264 (MP4) without its silent audio track. The template's
-original assets remain in git history.
+Images are WebP, sized for at most twice their rendered size. The template's 5.7 MB animated WebP is replaced by a still.
+The demo video is re-encoded to 720p VP9 (WebM) and H.264 (MP4) without its silent audio track. It ends at the order
+confirmation and fades back to the joint lockup, and its poster is taken from the redacted render.
 
 ## Needs sign-off
 
@@ -121,7 +124,8 @@ Compliance:
     there was succeeded by a new authority from 1 January 2026, and a UAE licence line does not belong on an India page).
 11. The new FAQ answers (account opening, TCS, withdrawals, fees) and the exchange codes NYSE, LSE, SGX and TSE shown in
     the decorative orbit.
-12. The demo video: a screen recording of the Voguestock web app with a named demo user, sample holdings, prices and
-    P&L, plus the sample market data and headlines in the dashboard mockups.
+12. Product screens (hero dashboard, laptop mock, demo video) no longer show personal data, but they show sample market
+    prices and a demo purchase of a named US stock (Atlassian, TEAM) next to its analyst ratings. The recording's
+    confirmation dialog also reads "46.93 shares" for a USD 46.93 order.
 13. The final domain for `VITE_SITE_URL` and the inbox that receives Web3Forms leads (the key is shared with the live
     landings).

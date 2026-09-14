@@ -25,8 +25,8 @@ export default function VideoSection() {
             See How Global Investing Works
           </h2>
           <p className="mb-8 text-lg leading-relaxed text-gray-600 sm:text-xl">
-            Watch how you can browse the marketplace, buy a US stock in fractions and follow your holdings in the
-            Voguestock app powered by Valura.Ai.
+            Watch how you can browse the marketplace and buy a fraction of a US stock in the Voguestock app powered
+            by Valura.Ai.
           </p>
           <button
             type="button"
