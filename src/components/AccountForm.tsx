@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type FormEvent } from 'react';
 import { ArrowRight, Check, LoaderCircle } from 'lucide-react';
 import Velaris from './ui/velaris';
 import StoreButtons from './StoreButtons';
+import ScrollReveal from './ui/ScrollReveal';
 import {
   CONTACT,
   LEAD_FROM_NAME,
@@ -38,6 +39,8 @@ const BENEFITS = [
 const FORM_COLORS = ['#7a3510', '#a34d0e', '#1a120b', '#ef7e2e'];
 const INITIAL_FORM: FormState = { fullName: '', mobile: '', email: '', investorType: 'Resident Indian', botcheck: false };
 
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
+
 function validate(form: FormState): FormErrors {
   const errors: FormErrors = {};
   const name = form.fullName.trim();
@@ -55,7 +58,7 @@ function validate(form: FormState): FormErrors {
 }
 
 const inputClass = (hasError: boolean) =>
-  `w-full rounded-xl border bg-white px-4 py-3.5 font-medium text-brand-dark placeholder:text-gray-500 transition duration-200 focus:outline-none focus:ring-2 ${
+  `w-full rounded-xl border bg-white px-4 py-3.5 font-medium text-brand-dark placeholder:text-gray-500 transition-colors duration-300 focus:outline-none focus:ring-2 ${
     hasError ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:border-brand-orange focus:ring-brand-orange/25'
   }`;
 
@@ -139,17 +142,23 @@ export default function AccountForm() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-20">
           <div className="flex flex-col justify-center space-y-6 lg:col-span-6">
-            <p className="eyebrow eyebrow-on-dark w-fit">Open an account</p>
-            <h2 className="font-display text-3xl leading-tight font-medium text-white sm:text-5xl">
+            <p data-reveal className="eyebrow eyebrow-on-dark w-fit">
+              Open an account
+            </p>
+            <ScrollReveal
+              as="h2"
+              delay={80}
+              containerClassName="font-display text-3xl leading-tight font-medium text-white sm:text-5xl"
+            >
               The Voguestock you trust, now with the world inside.
-            </h2>
-            <p className="max-w-xl text-lg leading-relaxed text-gray-300">
+            </ScrollReveal>
+            <p data-reveal style={revealDelay(160)} className="max-w-xl text-lg leading-relaxed text-gray-300">
               Fully digital, regulated in India, your money custodied in India. Leave your details and a Voguestock
               specialist takes it from there.
             </p>
             <ul className="space-y-4 pt-2">
-              {BENEFITS.map((item) => (
-                <li key={item} className="flex items-center gap-3">
+              {BENEFITS.map((item, index) => (
+                <li key={item} data-reveal style={revealDelay(220 + index * 70)} className="flex items-center gap-3">
                   <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15">
                     <Check aria-hidden="true" className="h-4 w-4 text-white" />
                   </span>
@@ -157,17 +166,17 @@ export default function AccountForm() {
                 </li>
               ))}
             </ul>
-            <div className="pt-2">
+            <div data-reveal style={revealDelay(300)} className="pt-2">
               <p className="mb-3 text-sm font-semibold text-gray-300">Or invest on the go</p>
               <StoreButtons onDark />
             </div>
           </div>
 
-          <div className="lg:col-span-6">
+          <div data-reveal="rise" style={revealDelay(120)} className="lg:col-span-6">
             <div className="relative flex min-h-[500px] flex-col justify-center overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 text-brand-dark shadow-2xl sm:p-10">
               {status === 'success' ? (
                 <div className="space-y-6 py-8 text-center" role="status" aria-live="polite">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-brand-green/25 bg-brand-green/10 text-brand-green">
+                  <div className="pop-in mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-brand-green/25 bg-brand-green/10 text-brand-green">
                     <Check aria-hidden="true" className="h-8 w-8" strokeWidth={3} />
                   </div>
                   <div className="space-y-2">
@@ -180,10 +189,10 @@ export default function AccountForm() {
                   </div>
                   <a
                     href={SIGNUP_URL}
-                    className="inline-flex items-center gap-2 rounded-xl bg-brand-orange px-6 py-3 font-bold text-brand-dark transition duration-200 hover:bg-brand-orange-soft"
+                    className="sheen group inline-flex items-center gap-2 rounded-xl bg-brand-orange px-6 py-3 font-bold text-brand-dark transition-colors duration-300 hover:bg-brand-orange-soft"
                   >
                     Continue to KYC
-                    <ArrowRight aria-hidden="true" className="h-5 w-5" />
+                    <ArrowRight aria-hidden="true" className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                   </a>
                 </div>
               ) : (
@@ -318,7 +327,7 @@ export default function AccountForm() {
                     <button
                       type="submit"
                       disabled={status === 'sending'}
-                      className="group mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-orange px-6 py-4 font-bold text-brand-dark transition-all duration-200 hover:bg-brand-orange-soft hover:shadow-xl hover:shadow-brand-orange/20 disabled:cursor-not-allowed disabled:opacity-80"
+                      className="sheen group mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-orange px-6 py-4 font-bold text-brand-dark transition-colors duration-300 hover:bg-brand-orange-soft disabled:cursor-not-allowed disabled:opacity-80"
                     >
                       {status === 'sending' ? (
                         <>
@@ -328,7 +337,7 @@ export default function AccountForm() {
                       ) : (
                         <>
                           <span>Contact us</span>
-                          <ArrowRight aria-hidden="true" className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
+                          <ArrowRight aria-hidden="true" className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                         </>
                       )}
                     </button>

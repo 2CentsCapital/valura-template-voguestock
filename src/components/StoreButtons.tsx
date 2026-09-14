@@ -24,7 +24,8 @@ interface StoreButtonsProps {
 
 /** App Store and Google Play download links for the Valura.Ai app. */
 export default function StoreButtons({ className = '', onDark = false }: StoreButtonsProps) {
-  const base = 'inline-flex items-center gap-2.5 rounded-xl border px-4 py-2 transition-colors duration-200';
+  const base =
+    'inline-flex items-center gap-2.5 rounded-xl border px-4 py-2 transition-[translate,background-color,border-color] duration-300 hover:-translate-y-0.5';
   const tone = onDark
     ? 'border-white bg-white text-brand-dark hover:bg-brand-peach'
     : 'border-brand-dark bg-brand-dark text-white hover:bg-black';

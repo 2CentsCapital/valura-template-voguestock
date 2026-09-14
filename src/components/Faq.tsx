@@ -1,5 +1,6 @@
-import { useId, useState } from 'react';
+import { useId, useState, type CSSProperties } from 'react';
 import { Plus } from 'lucide-react';
+import ScrollReveal from './ui/ScrollReveal';
 
 interface FaqItem {
   question: string;
@@ -55,6 +56,8 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
+const revealDelay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as CSSProperties;
+
 export default function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const baseId = useId();
@@ -63,10 +66,16 @@ export default function Faq() {
     <section className="border-t border-gray-100 bg-white py-20 sm:py-24" id="faq">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center sm:mb-16">
-          <p className="eyebrow">Good to know</p>
-          <h2 className="mt-4 font-display text-4xl leading-tight font-medium text-brand-dark sm:text-5xl">
+          <p data-reveal className="eyebrow">
+            Good to know
+          </p>
+          <ScrollReveal
+            as="h2"
+            delay={80}
+            containerClassName="mt-4 font-display text-4xl leading-tight font-medium text-brand-dark sm:text-5xl"
+          >
             Questions, answered simply.
-          </h2>
+          </ScrollReveal>
         </div>
 
         <div className="font-sans">
@@ -75,7 +84,12 @@ export default function Faq() {
             const buttonId = `${baseId}-question-${index}`;
             const panelId = `${baseId}-answer-${index}`;
             return (
-              <div key={item.question} className="border-b border-gray-200 py-5 sm:py-6">
+              <div
+                key={item.question}
+                data-reveal
+                style={revealDelay(Math.min(index, 4) * 60)}
+                className="border-b border-gray-200 py-5 sm:py-6"
+              >
                 <h3 className="font-sans">
                   <button
                     id={buttonId}
@@ -85,13 +99,15 @@ export default function Faq() {
                     onClick={() => setOpenIndex(isOpen ? null : index)}
                     className="group flex w-full items-center justify-between gap-4 rounded-lg text-left"
                   >
-                    <span className="text-lg font-bold text-brand-dark transition-colors duration-200 group-hover:text-brand-orange-strong sm:text-2xl">
+                    <span className="text-lg font-bold text-brand-dark transition-colors duration-300 group-hover:text-brand-orange-strong sm:text-2xl">
                       {item.question}
                     </span>
                     <span
                       aria-hidden="true"
-                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                        isOpen ? 'rotate-45 border-brand-orange bg-brand-orange text-brand-dark' : 'border-gray-300 text-gray-600'
+                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 transition-[rotate,background-color,border-color,color] duration-500 ${
+                        isOpen
+                          ? 'rotate-45 border-brand-orange bg-brand-orange text-brand-dark'
+                          : 'border-gray-300 text-gray-600 group-hover:border-brand-orange'
                       }`}
                     >
                       <Plus className="h-5 w-5" />
@@ -103,10 +119,16 @@ export default function Faq() {
                   role="region"
                   aria-labelledby={buttonId}
                   inert={!isOpen}
-                  className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+                  className={`grid transition-[grid-template-rows] duration-500 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                 >
                   <div className="overflow-hidden">
-                    <p className="max-w-3xl pt-4 text-base leading-relaxed text-gray-600 sm:text-lg">{item.answer}</p>
+                    <p
+                      className={`max-w-3xl pt-4 text-base leading-relaxed text-gray-600 transition-[opacity,translate] duration-500 sm:text-lg ${
+                        isOpen ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+                      }`}
+                    >
+                      {item.answer}
+                    </p>
                   </div>
                 </div>
               </div>
